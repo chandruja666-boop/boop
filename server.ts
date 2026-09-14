@@ -4,8 +4,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_WEBSITE_CONTENT } from './src/services/mockData';
-import { Order, Product } from './src/types';
+import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_WEBSITE_CONTENT } from './services/mockData.js';
+import { Order, Product } from './types.js';
 
 interface Database {
     products: Product[];
