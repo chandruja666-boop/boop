@@ -457,13 +457,13 @@ export const AdminView: React.FC = () => {
 
   // CALCULATE DASHBOARD METRICS
   const totalSales = orders.reduce(
-    (sum, o) => sum + (o.orderStatus !== 'cancelled' ? (o.total ?? o.grandTotal ?? 0) : 0),
+    (sum, o) => sum + (o.orderStatus !== 'Cancelled' ? (o.total ?? o.grandTotal ?? 0) : 0),
     0
   );
   const totalOrders = orders.length;
   const lowStockProducts = products.filter((p) => p.stock <= p.lowStockLimit);
-  const deliveredOrders = orders.filter((o) => o.orderStatus === 'delivered').length;
-  const pendingOrders = orders.filter((o) => o.orderStatus === 'placed' || o.orderStatus === 'processing').length;
+  const deliveredOrders = orders.filter((o) => o.orderStatus === 'Delivered').length;
+  const pendingOrders = orders.filter((o) => o.orderStatus === 'Pending' || o.orderStatus === 'Processing').length;
 
   // Open Add Product Modal
   const handleOpenAddProduct = () => {
@@ -2725,7 +2725,7 @@ export const AdminView: React.FC = () => {
                               {prod && (
                                 <button
                                   type="button"
-                                  onClick={() => openProductDetail(prod)}
+                                  onClick={() => openProductDetail(prod.id)}
                                   className="text-[11px] font-semibold text-amber-800 hover:text-amber-900 hover:underline flex items-center gap-1 mt-0.5 cursor-pointer"
                                 >
                                   <span>View Product Details</span>

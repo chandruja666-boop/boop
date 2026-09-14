@@ -54,9 +54,8 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
   };
 
   return (
-    <section className={`relative overflow-hidden bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950 border-y border-amber-500/30 text-stone-100 shadow-2xl transition-all duration-1000 ease-out transform ${
-      animate ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-[0.99]'
-    }`}>
+    <section className={`relative overflow-hidden bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950 border-y border-amber-500/30 text-stone-100 shadow-2xl transition-all duration-1000 ease-out transform ${animate ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-[0.99]'
+      }`}>
       {/* Ambient Gold Glow & Background Mesh */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
@@ -120,11 +119,10 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
                 <button
                   type="button"
                   onClick={handleCopyCode}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow ${
-                    copied
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow ${copied
                       ? 'bg-emerald-500 text-stone-950'
                       : 'bg-amber-500 hover:bg-amber-400 text-stone-950 active:scale-95'
-                  }`}
+                    }`}
                   title="Click to copy festive coupon code"
                 >
                   {copied ? (
@@ -147,7 +145,7 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
               <button
                 type="button"
                 onClick={() => {
-                  setCurrentView(banner.ctaLink || 'shop');
+                  setCurrentView((banner.ctaLink || 'shop') as Parameters<typeof setCurrentView>[0]);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs sm:text-sm font-bold rounded-xl shadow-lg hover:shadow-amber-500/25 transition-all cursor-pointer flex items-center gap-2 group"
@@ -159,7 +157,7 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
               <button
                 type="button"
                 onClick={() => {
-                  setCurrentView(banner.secondaryCtaLink || 'showrooms');
+                  setCurrentView((banner.secondaryCtaLink || 'showrooms') as Parameters<typeof setCurrentView>[0]);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="px-5 py-3 bg-stone-800/80 hover:bg-stone-700 text-stone-200 hover:text-white text-xs sm:text-sm font-semibold rounded-xl border border-stone-700 hover:border-amber-400/50 transition-all cursor-pointer flex items-center gap-2"

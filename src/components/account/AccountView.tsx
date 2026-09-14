@@ -153,8 +153,8 @@ export const AccountView: React.FC = () => {
               {authMode === 'otp'
                 ? 'VIP Customer Sign In'
                 : authMode === 'login'
-                ? 'Customer Password Sign In'
-                : 'Create VIP Account'}
+                  ? 'Customer Password Sign In'
+                  : 'Create VIP Account'}
             </h1>
             <p className="text-xs text-stone-500 max-w-sm mx-auto">
               Access your bespoke orders, real-time white-glove tracking, and VIP member benefits.
@@ -167,11 +167,10 @@ export const AccountView: React.FC = () => {
               id="auth-tab-customer-otp"
               type="button"
               onClick={() => setAuthMode('otp')}
-              className={`py-2 px-1 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                authMode === 'otp'
+              className={`py-2 px-1 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${authMode === 'otp'
                   ? 'bg-stone-900 text-amber-300 shadow-md font-bold'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60'
-              }`}
+                }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span>Mobile OTP</span>
@@ -184,11 +183,10 @@ export const AccountView: React.FC = () => {
               id="auth-tab-customer-login"
               type="button"
               onClick={() => setAuthMode('login')}
-              className={`py-2 px-1 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                authMode === 'login'
+              className={`py-2 px-1 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${authMode === 'login'
                   ? 'bg-stone-900 text-white shadow-md font-bold'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60'
-              }`}
+                }`}
             >
               <KeyRound className="w-3.5 h-3.5" />
               <span>Password</span>
@@ -198,11 +196,10 @@ export const AccountView: React.FC = () => {
               id="auth-tab-customer-register"
               type="button"
               onClick={() => setAuthMode('register')}
-              className={`py-2 px-1 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                authMode === 'register'
+              className={`py-2 px-1 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${authMode === 'register'
                   ? 'bg-stone-900 text-white shadow-md font-bold'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60'
-              }`}
+                }`}
             >
               <User className="w-3.5 h-3.5" />
               <span>Register</span>
@@ -422,9 +419,8 @@ export const AccountView: React.FC = () => {
         <aside className="lg:col-span-3 space-y-1 bg-white p-3 rounded-2xl border border-stone-200 h-fit">
           <button
             onClick={() => setActiveTab('orders')}
-            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${
-              activeTab === 'orders' ? 'bg-stone-900 text-white shadow' : 'text-stone-700 hover:bg-stone-100'
-            }`}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${activeTab === 'orders' ? 'bg-stone-900 text-white shadow' : 'text-stone-700 hover:bg-stone-100'
+              }`}
           >
             <Package className="w-4 h-4" />
             <span>My Orders ({customerOrders.length})</span>
@@ -432,9 +428,8 @@ export const AccountView: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('addresses')}
-            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${
-              activeTab === 'addresses' ? 'bg-stone-900 text-white shadow' : 'text-stone-700 hover:bg-stone-100'
-            }`}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${activeTab === 'addresses' ? 'bg-stone-900 text-white shadow' : 'text-stone-700 hover:bg-stone-100'
+              }`}
           >
             <MapPin className="w-4 h-4" />
             <span>Saved Addresses ({customer.addresses.length})</span>
@@ -442,9 +437,8 @@ export const AccountView: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('reviews')}
-            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${
-              activeTab === 'reviews' ? 'bg-stone-900 text-white shadow' : 'text-stone-700 hover:bg-stone-100'
-            }`}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${activeTab === 'reviews' ? 'bg-stone-900 text-white shadow' : 'text-stone-700 hover:bg-stone-100'
+              }`}
           >
             <Star className="w-4 h-4" />
             <span>My Reviews ({customer.reviews.length})</span>
@@ -452,9 +446,8 @@ export const AccountView: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('profile')}
-            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${
-              activeTab === 'profile' ? 'bg-stone-900 text-white shadow' : 'text-stone-700 hover:bg-stone-100'
-            }`}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${activeTab === 'profile' ? 'bg-stone-900 text-white shadow' : 'text-stone-700 hover:bg-stone-100'
+              }`}
           >
             <User className="w-4 h-4" />
             <span>Account Details</span>
@@ -570,9 +563,9 @@ export const AccountView: React.FC = () => {
                 </div>
               ) : (
                 customerOrders.map((order) => {
-                  const isDelivered = order.orderStatus === 'delivered';
-                  const isCancelled = order.orderStatus === 'cancelled';
-                  const isReturnRequested = order.orderStatus === 'return_requested';
+                  const isDelivered = order.orderStatus === 'Delivered';
+                  const isCancelled = order.orderStatus === 'Cancelled';
+                  const isReturnRequested = order.orderStatus === 'Returned';
 
                   return (
                     <div
@@ -643,11 +636,10 @@ export const AccountView: React.FC = () => {
                             {(order.trackingSteps || []).map((step, idx) => (
                               <div key={idx} className="flex flex-col items-center text-center">
                                 <div
-                                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-1.5 ${
-                                    step.completed
+                                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-1.5 ${step.completed
                                       ? 'bg-emerald-600 text-white'
                                       : 'bg-stone-200 text-stone-500'
-                                  }`}
+                                    }`}
                                 >
                                   {step.completed ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
                                 </div>
@@ -697,7 +689,7 @@ export const AccountView: React.FC = () => {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {order.orderStatus === 'placed' && (
+                          {order.orderStatus === 'Pending' && (
                             <button
                               onClick={() => cancelOrder(order.id)}
                               className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-lg transition-colors"

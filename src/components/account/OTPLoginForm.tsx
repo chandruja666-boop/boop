@@ -469,7 +469,9 @@ export const OTPLoginForm: React.FC<OTPLoginFormProps> = ({
               {otpDigits.map((digit, index) => (
                 <input
                   key={index}
-                  ref={(el) => (inputRefs.current[index] = el)}
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
                   id={`otp-digit-${index}`}
                   type="text"
                   inputMode="numeric"

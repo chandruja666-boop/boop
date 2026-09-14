@@ -473,11 +473,10 @@ export const ProductDetailView: React.FC = () => {
                   toggleWishlist(product.id);
                 }}
                 aria-label="Add to Wishlist"
-                className={`p-2.5 rounded-full backdrop-blur-md shadow-md transition-all active:scale-95 cursor-pointer ${
-                  isWishlisted
+                className={`p-2.5 rounded-full backdrop-blur-md shadow-md transition-all active:scale-95 cursor-pointer ${isWishlisted
                     ? 'bg-red-50 text-red-600'
                     : 'bg-white/80 hover:bg-white text-stone-700'
-                }`}
+                  }`}
               >
                 <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
               </button>
@@ -502,11 +501,10 @@ export const ProductDetailView: React.FC = () => {
                   key={idx}
                   onClick={() => scrollToImage(idx)}
                   aria-label={`Go to slide ${idx + 1}`}
-                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                    idx === activeImageIndex
+                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${idx === activeImageIndex
                       ? 'w-7 bg-amber-900 shadow-sm'
                       : 'w-2 bg-stone-300 hover:bg-stone-400'
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -519,11 +517,10 @@ export const ProductDetailView: React.FC = () => {
                 <button
                   key={idx}
                   onClick={() => scrollToImage(idx)}
-                  className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
-                    idx === activeImageIndex
+                  className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${idx === activeImageIndex
                       ? 'border-amber-900 ring-2 ring-amber-900/20 shadow-md scale-102'
                       : 'border-stone-200 opacity-70 hover:opacity-100'
-                  }`}
+                    }`}
                 >
                   <img
                     src={img}
@@ -670,11 +667,10 @@ export const ProductDetailView: React.FC = () => {
                     <button
                       key={c.name}
                       onClick={() => setSelectedColor(c.name)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all ${
-                        isSelected
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all ${isSelected
                           ? 'border-amber-900 bg-amber-50 text-amber-900 font-bold shadow-sm ring-1 ring-amber-900'
                           : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
-                      }`}
+                        }`}
                     >
                       <span
                         className="w-3.5 h-3.5 rounded-full border border-stone-300 flex-shrink-0"
@@ -701,11 +697,10 @@ export const ProductDetailView: React.FC = () => {
                     <button
                       key={s}
                       onClick={() => setSelectedSize(s)}
-                      className={`px-3.5 py-2 rounded-xl border text-xs transition-all ${
-                        isSelected
+                      className={`px-3.5 py-2 rounded-xl border text-xs transition-all ${isSelected
                           ? 'border-stone-900 bg-stone-900 text-white font-bold'
                           : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
-                      }`}
+                        }`}
                     >
                       {s}
                     </button>
@@ -952,11 +947,10 @@ export const ProductDetailView: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-6 py-4 text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                activeTab === tab.id
+              className={`px-6 py-4 text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab.id
                   ? 'border-b-2 border-amber-900 text-amber-900 bg-amber-50/40'
                   : 'text-stone-500 hover:text-stone-900'
-              }`}
+                }`}
             >
               {tab.label}
             </button>
@@ -1123,9 +1117,8 @@ export const ProductDetailView: React.FC = () => {
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-5 h-5 ${
-                      star <= Math.round(ratingStats.average) ? 'fill-current' : 'text-stone-300'
-                    }`}
+                    className={`w-5 h-5 ${star <= Math.round(ratingStats.average) ? 'fill-current' : 'text-stone-300'
+                      }`}
                   />
                 ))}
               </div>
@@ -1152,9 +1145,8 @@ export const ProductDetailView: React.FC = () => {
                     key={star}
                     type="button"
                     onClick={() => setReviewFilterRating(isSelected ? 'all' : star)}
-                    className={`w-full flex items-center gap-3 text-xs py-1 px-2 rounded-lg transition-colors group cursor-pointer ${
-                      isSelected ? 'bg-amber-100/70 text-amber-900 font-bold' : 'hover:bg-stone-100 text-stone-600'
-                    }`}
+                    className={`w-full flex items-center gap-3 text-xs py-1 px-2 rounded-lg transition-colors group cursor-pointer ${isSelected ? 'bg-amber-100/70 text-amber-900 font-bold' : 'hover:bg-stone-100 text-stone-600'
+                      }`}
                   >
                     <span className="w-8 text-right font-semibold flex items-center justify-end gap-1">
                       <span>{star}</span>
@@ -1162,9 +1154,8 @@ export const ProductDetailView: React.FC = () => {
                     </span>
                     <div className="flex-1 h-2.5 bg-stone-200 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          isSelected ? 'bg-amber-600' : 'bg-amber-500 group-hover:bg-amber-600'
-                        }`}
+                        className={`h-full rounded-full transition-all duration-500 ${isSelected ? 'bg-amber-600' : 'bg-amber-500 group-hover:bg-amber-600'
+                          }`}
                         style={{ width: `${percent}%` }}
                       />
                     </div>
@@ -1249,9 +1240,8 @@ export const ProductDetailView: React.FC = () => {
                         title={`${star} Star${star > 1 ? 's' : ''}`}
                       >
                         <Star
-                          className={`w-7 h-7 transition-colors ${
-                            star <= activeVal ? 'fill-amber-400 text-amber-400' : 'text-stone-600'
-                          }`}
+                          className={`w-7 h-7 transition-colors ${star <= activeVal ? 'fill-amber-400 text-amber-400' : 'text-stone-600'
+                            }`}
                         />
                       </button>
                     );
@@ -1338,11 +1328,10 @@ export const ProductDetailView: React.FC = () => {
             </span>
             <button
               onClick={() => setReviewFilterRating('all')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                reviewFilterRating === 'all'
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${reviewFilterRating === 'all'
                   ? 'bg-stone-900 text-white'
                   : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
-              }`}
+                }`}
             >
               All ({productReviews.length})
             </button>
@@ -1352,11 +1341,10 @@ export const ProductDetailView: React.FC = () => {
                 <button
                   key={star}
                   onClick={() => setReviewFilterRating(star)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                    reviewFilterRating === star
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${reviewFilterRating === star
                       ? 'bg-amber-500 text-stone-950 font-bold shadow-xs'
                       : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
-                  }`}
+                    }`}
                 >
                   <span>{star}</span>
                   <Star className="w-3 h-3 fill-current text-amber-500" />
@@ -1434,9 +1422,8 @@ export const ProductDetailView: React.FC = () => {
                         {[1, 2, 3, 4, 5].map((s) => (
                           <Star
                             key={s}
-                            className={`w-4 h-4 ${
-                              s <= rev.rating ? 'fill-current text-amber-500' : 'text-stone-200'
-                            }`}
+                            className={`w-4 h-4 ${s <= rev.rating ? 'fill-current text-amber-500' : 'text-stone-200'
+                              }`}
                           />
                         ))}
                       </div>
@@ -1472,7 +1459,7 @@ export const ProductDetailView: React.FC = () => {
                           {rev.verified && (
                             <CheckCircle2
                               className="w-3.5 h-3.5 text-emerald-600"
-                              title="Verified CP Furniture Purchaser"
+                              aria-label="Verified CP Furniture Purchaser"
                             />
                           )}
                         </div>
@@ -1649,11 +1636,10 @@ export const ProductDetailView: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => setActiveImageIndex(idx)}
-                className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
-                  idx === activeImageIndex
+                className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${idx === activeImageIndex
                     ? 'border-amber-500 ring-2 ring-amber-500/40 opacity-100 scale-105'
                     : 'border-stone-700 opacity-60 hover:opacity-100'
-                }`}
+                  }`}
               >
                 <img
                   src={img}
@@ -1718,11 +1704,10 @@ export const ProductDetailView: React.FC = () => {
             <button
               type="button"
               onClick={() => toggleWishlist(product.id)}
-              className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-                isWishlisted
+              className={`p-2.5 rounded-xl border transition-all cursor-pointer ${isWishlisted
                   ? 'bg-red-50 text-red-600 border-red-200'
                   : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'
-              }`}
+                }`}
               aria-label="Wishlist"
             >
               <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current text-red-600' : ''}`} />

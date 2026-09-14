@@ -119,6 +119,7 @@ export interface CustomerReview {
   authorCity?: string;
   status?: 'published' | 'pending' | 'flagged';
   adminNotes?: string;
+  helpfulCount?: number;
 }
 
 export interface Customer {
@@ -138,6 +139,7 @@ export interface Customer {
   isBlocked: boolean;
   createdAt: string;
   totalSpent: number;
+  loyaltyPoints?: number;
 }
 
 export interface OrderItem {

@@ -201,7 +201,7 @@ export const HomeView: React.FC = () => {
           </div>
 
           {/* Cards container */}
-          <div 
+          <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
             className="overflow-x-auto no-scrollbar scroll-smooth relative"
@@ -217,7 +217,7 @@ export const HomeView: React.FC = () => {
                     key={dept.name}
                     onClick={() => {
                       if (dept.view) {
-                        setCurrentView(dept.view);
+                        setCurrentView(dept.view as Parameters<typeof setCurrentView>[0]);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       } else if (dept.categoryName) {
                         selectCategoryFromHome(dept.categoryName);
@@ -247,7 +247,7 @@ export const HomeView: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white group-hover:text-amber-400 transition-colors truncate max-w-[95px] sm:max-w-[120px] pb-1">
                       {dept.name}
                     </span>
@@ -260,7 +260,7 @@ export const HomeView: React.FC = () => {
           {/* Sleek Custom Gold-accented Scroll Progress Indicator */}
           <div className="mt-4 flex justify-center">
             <div className="w-36 h-0.5 bg-stone-850 rounded-full overflow-hidden relative">
-              <div 
+              <div
                 className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-150 ease-out"
                 style={{ width: `${Math.max(12, scrollProgress)}%` }}
               />
@@ -273,13 +273,12 @@ export const HomeView: React.FC = () => {
       <section className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-3.5 sm:px-6 lg:px-8">
         <div className="relative rounded-3xl overflow-hidden shadow-xl bg-stone-900 text-white">
           {currentSlide && (
-            <div className={`relative flex items-center transition-all duration-500 ${
-              currentSlide.sizeOption === 'full'
+            <div className={`relative flex items-center transition-all duration-500 ${currentSlide.sizeOption === 'full'
                 ? 'min-h-[450px] sm:min-h-[580px] lg:min-h-[660px]'
                 : currentSlide.sizeOption === 'compact'
-                ? 'min-h-[300px] sm:min-h-[360px] lg:min-h-[400px]'
-                : 'min-h-[380px] sm:min-h-[460px] lg:min-h-[500px]'
-            }`}>
+                  ? 'min-h-[300px] sm:min-h-[360px] lg:min-h-[400px]'
+                  : 'min-h-[380px] sm:min-h-[460px] lg:min-h-[500px]'
+              }`}>
               {/* Background Image with Optical Gradient */}
               <div className="absolute inset-0 z-0">
                 <img
@@ -357,9 +356,8 @@ export const HomeView: React.FC = () => {
                   <button
                     key={i}
                     onClick={() => setCurrentSlideIndex(i)}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${
-                      i === currentSlideIndex ? 'w-7 bg-amber-500' : 'w-2 bg-stone-600 hover:bg-stone-500'
-                    }`}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${i === currentSlideIndex ? 'w-7 bg-amber-500' : 'w-2 bg-stone-600 hover:bg-stone-500'
+                      }`}
                     aria-label={`Go to slide ${i + 1}`}
                   />
                 ))}
@@ -518,11 +516,10 @@ export const HomeView: React.FC = () => {
                 <button
                   key={tab}
                   onClick={() => setActiveRoomTab(tab)}
-                  className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                    activeRoomTab === tab
+                  className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${activeRoomTab === tab
                       ? 'bg-stone-900 text-white shadow-md'
                       : 'bg-white text-stone-700 hover:bg-stone-200 border border-stone-300/60'
-                  }`}
+                    }`}
                 >
                   {tab}
                 </button>
@@ -631,11 +628,10 @@ export const HomeView: React.FC = () => {
                 <button
                   key={cat}
                   onClick={() => setStorefrontFilter(cat)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                    storefrontFilter === cat
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${storefrontFilter === cat
                       ? 'bg-stone-900 text-white shadow-sm'
                       : 'bg-white text-stone-700 hover:bg-stone-200 border border-stone-200'
-                  }`}
+                    }`}
                 >
                   {cat}
                 </button>
@@ -684,9 +680,6 @@ export const HomeView: React.FC = () => {
               title="Why 250,000+ Indian Homes Choose Us"
               subtitle="Every curve, dovetail joint, and velvet weave is executed with perfectionist standards."
               align="center"
-              eyebrowColor="text-amber-400"
-              titleColor="text-white"
-              subtitleColor="text-stone-400"
               className="mb-8 sm:mb-12"
             />
 

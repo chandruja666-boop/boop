@@ -116,7 +116,6 @@ const MainContent: React.FC = () => {
         return <WishlistView />;
       case 'account':
       case 'auth':
-      case 'orders':
       case 'order-tracking':
         return <AccountView />;
       case 'invoice':

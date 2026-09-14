@@ -132,7 +132,7 @@ export const ShopView: React.FC = () => {
       if (filters.sortBy === 'price-high') return b.salePrice - a.salePrice;
       if (filters.sortBy === 'newest') return (b.isNewArrival ? 1 : 0) - (a.isNewArrival ? 1 : 0);
       if (filters.sortBy === 'rating') return b.rating - a.rating;
-      if (filters.sortBy === 'popular' || filters.sortBy === 'best-selling')
+      if (filters.sortBy === 'popular')
         return (b.isBestSeller ? 1 : 0) - (a.isBestSeller ? 1 : 0);
       return 0; // featured default
     });
@@ -280,8 +280,8 @@ export const ShopView: React.FC = () => {
               key={disc}
               onClick={() => updateFilter('minDiscount', disc)}
               className={`px-2.5 py-1.5 rounded-lg border text-xs text-center transition-colors ${filters.minDiscount === disc
-                  ? 'border-amber-900 bg-amber-50 text-amber-900 font-bold'
-                  : 'border-stone-200 hover:border-stone-400 text-stone-700'
+                ? 'border-amber-900 bg-amber-50 text-amber-900 font-bold'
+                : 'border-stone-200 hover:border-stone-400 text-stone-700'
                 }`}
             >
               {disc === 0 ? 'All Items' : `${disc}% or more`}
@@ -367,8 +367,8 @@ export const ShopView: React.FC = () => {
           <button
             onClick={() => updateFilter('availability', 'all')}
             className={`flex-1 py-1.5 rounded border text-xs text-center ${filters.availability === 'all'
-                ? 'border-stone-900 bg-stone-900 text-white font-bold'
-                : 'border-stone-200 text-stone-700'
+              ? 'border-stone-900 bg-stone-900 text-white font-bold'
+              : 'border-stone-200 text-stone-700'
               }`}
           >
             All
@@ -376,8 +376,8 @@ export const ShopView: React.FC = () => {
           <button
             onClick={() => updateFilter('availability', 'in-stock')}
             className={`flex-1 py-1.5 rounded border text-xs text-center ${filters.availability === 'in-stock'
-                ? 'border-emerald-700 bg-emerald-50 text-emerald-800 font-bold'
-                : 'border-stone-200 text-stone-700'
+              ? 'border-emerald-700 bg-emerald-50 text-emerald-800 font-bold'
+              : 'border-stone-200 text-stone-700'
               }`}
           >
             In Stock

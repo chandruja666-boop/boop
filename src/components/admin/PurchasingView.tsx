@@ -809,8 +809,8 @@ export const PurchasingView: React.FC = () => {
           <button
             onClick={() => setActiveSubTab('grn')}
             className={`py-4 font-black transition-all cursor-pointer border-b-2 flex items-center gap-2 ${activeSubTab === 'grn'
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-stone-400 hover:text-white'
+              ? 'border-amber-500 text-amber-400'
+              : 'border-transparent text-stone-400 hover:text-white'
               }`}
           >
             <Boxes className="w-4 h-4" />
@@ -820,8 +820,8 @@ export const PurchasingView: React.FC = () => {
           <button
             onClick={() => setActiveSubTab('po')}
             className={`py-4 font-black transition-all cursor-pointer border-b-2 flex items-center gap-2 ${activeSubTab === 'po'
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-stone-400 hover:text-white'
+              ? 'border-amber-500 text-amber-400'
+              : 'border-transparent text-stone-400 hover:text-white'
               }`}
           >
             <FileText className="w-4 h-4" />
@@ -831,8 +831,8 @@ export const PurchasingView: React.FC = () => {
           <button
             onClick={() => setActiveSubTab('suppliers')}
             className={`py-4 font-black transition-all cursor-pointer border-b-2 flex items-center gap-2 ${activeSubTab === 'suppliers'
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-stone-400 hover:text-white'
+              ? 'border-amber-500 text-amber-400'
+              : 'border-transparent text-stone-400 hover:text-white'
               }`}
           >
             <Users className="w-4 h-4" />
@@ -842,8 +842,8 @@ export const PurchasingView: React.FC = () => {
           <button
             onClick={() => setActiveSubTab('inventory')}
             className={`py-4 font-black transition-all cursor-pointer border-b-2 flex items-center gap-2 ${activeSubTab === 'inventory'
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-stone-400 hover:text-white'
+              ? 'border-amber-500 text-amber-400'
+              : 'border-transparent text-stone-400 hover:text-white'
               }`}
           >
             <ClipboardList className="w-4 h-4" />
@@ -1216,8 +1216,8 @@ export const PurchasingView: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <span className="font-serif-luxury text-sm font-black text-white">{po.poNumber}</span>
                             <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${po.status === 'Completed'
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                               }`}>
                               {po.status}
                             </span>
@@ -1532,7 +1532,7 @@ export const PurchasingView: React.FC = () => {
                           <td className="p-3 flex items-center gap-3">
                             <img
                               referrerPolicy="no-referrer"
-                              src={p.image}
+                              src={p.images?.[0]}
                               alt={p.name}
                               className="w-10 h-10 object-cover rounded-lg bg-stone-950 border border-stone-800"
                             />
