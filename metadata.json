@@ -1,0 +1,8 @@
+{
+  "name": "CP Furniture - Premium Modern Showroom",
+  "description": "Complete premium furniture e-commerce experience with showroom collections, advanced filters, multi-step checkout, customer dashboard, and full admin management system.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
