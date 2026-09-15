@@ -3,8 +3,8 @@ import express from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_WEBSITE_CONTENT } from './services/mockData';
-import { Order, Product } from './types';
+import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_WEBSITE_CONTENT } from './src/services/mockData';
+import { Order, Product } from './src/types';
 
 interface Database {
     products: Product[];
@@ -16,7 +16,7 @@ interface Database {
 
 const app = express();
 const port = Number(process.env.API_PORT || 4000);
-const databasePath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'server-data.json');
+const databasePath = path.join(process.cwd(), 'server-data.json');
 const realtimeClients = new Set<express.Response>();
 const otpStore = new Map<string, { codeHash: string; expiresAt: number; attempts: number }>();
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
@@ -392,7 +392,7 @@ app.post('/api/sync/seed', (req, res) => {
 
 // ... 
 
-const frontendDistPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../dist');
+const frontendDistPath = path.join(process.cwd(), 'dist');
 if (fs.existsSync(frontendDistPath)) {
     app.use(express.static(frontendDistPath));
     app.get('*', (_req, res) => {
