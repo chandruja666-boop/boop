@@ -258,9 +258,8 @@ app.post('/api/auth/otp/verify', (req, res) => {
 app.post('/api/auth/admin/login', (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    if (!email || email !== adminEmail.toLowerCase() || password !== adminPassword) {
-        res.status(401).json({ success: false, message: 'Invalid admin credentials.' });
-        return;
+    if (!email || email.trim().toLowerCase() !== adminEmail.toLowerCase() || password !== adminPassword) {
+        return res.status(401).json({ success: false, message: 'Invalid admin credentials.' });
     }
     const user = { name: 'Chief Merchandiser', email: adminEmail, role: 'Super Admin' };
     const token = crypto.randomBytes(32).toString('hex');
