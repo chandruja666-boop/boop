@@ -24,7 +24,7 @@ const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '';
 const paymentMode = process.env.PAYMENT_MODE || 'disabled';
 const adminEmail = process.env.ADMIN_EMAIL || 'chandruja666@gmail.com';
 const adminPassword = process.env.ADMIN_PASSWORD || '123';
-
+const adminSessions = new Map<string, { user: { name: string; email: string; role: string }; expiresAt: number }>();
 app.use(express.json({ limit: '10mb' }));
 app.use((_req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -258,7 +258,7 @@ app.post('/api/auth/otp/verify', (req, res) => {
 app.post('/api/auth/admin/login', (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    if (!process.env.ADMIN_PASSWORD || email !== adminEmail.toLowerCase() || hash(password) !== adminPasswordHash) {
+    if (!email || email !== adminEmail.toLowerCase() || password !== adminPassword) {
         res.status(401).json({ success: false, message: 'Invalid admin credentials.' });
         return;
     }
