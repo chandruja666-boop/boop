@@ -22,9 +22,8 @@ const otpStore = new Map<string, { codeHash: string; expiresAt: number; attempts
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
 const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '';
 const paymentMode = process.env.PAYMENT_MODE || 'disabled';
-const adminEmail = process.env.ADMIN_EMAIL || 'admin@cpfurniture.com';
-const adminPasswordHash = hash(process.env.ADMIN_PASSWORD || '');
-const adminSessions = new Map<string, { user: { name: string; email: string; role: string }; expiresAt: number }>();
+const adminEmail = process.env.ADMIN_EMAIL || 'chandruja666@gmail.com';
+const adminPassword = process.env.ADMIN_PASSWORD || '123';
 
 app.use(express.json({ limit: '10mb' }));
 app.use((_req, res, next) => {
