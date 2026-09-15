@@ -3,9 +3,8 @@ import express from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_WEBSITE_CONTENT } from './services/mockData.ts';
-import { Order, Product } from './types.ts';
+import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_WEBSITE_CONTENT } from './services/mockData';
+import { Order, Product } from './types';
 
 interface Database {
     products: Product[];
@@ -390,7 +389,6 @@ app.post('/api/sync/seed', (req, res) => {
     }
     res.json({ success: true });
 });
-import path from 'node:path';
 
 // ... 
 
