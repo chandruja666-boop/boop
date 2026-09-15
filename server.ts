@@ -4,8 +4,9 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_WEBSITE_CONTENT } from './src/services/mockData.ts';
-import { Order, Product } from './src/types.ts';
+import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_WEBSITE_CONTENT } from './services/mockData.ts';
+import { Order, Product } from './types.ts';
+
 interface Database {
     products: Product[];
     orders: Order[];
@@ -389,7 +390,17 @@ app.post('/api/sync/seed', (req, res) => {
     }
     res.json({ success: true });
 });
+import path from 'node:path';
 
+// ... 
+
+const frontendDistPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../dist');
+if (fs.existsSync(frontendDistPath)) {
+    app.use(express.static(frontendDistPath));
+    app.get('*', (_req, res) => {
+        res.sendFile(path.join(frontendDistPath, 'index.html'));
+    });
+}
 app.listen(port, () => {
     console.log(`CP Furniture cloud backend listening on http://localhost:${port}`);
 });
