@@ -28,7 +28,7 @@ const adminSessions = new Map<string, { user: { name: string; email: string; rol
 app.use(express.json({ limit: '10mb' }));
 app.use((_req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,PATCH,DELETE,OPTIONS');
     if (_req.method === 'OPTIONS') {
         res.sendStatus(204);
