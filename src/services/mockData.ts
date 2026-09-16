@@ -998,7 +998,7 @@ export const INITIAL_WEBSITE_CONTENT: WebsiteContent = {
     code: 'VINAYAGAR15',
     discountText: 'EXTRA 15% FESTIVE OFF',
     expiryText: 'Limited Festive Offer • Valid Across Showrooms & Online',
-    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1920&q=85',
+    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80',
     ctaText: 'Explore Festive Collection',
     ctaLink: 'shop',
     secondaryCtaText: 'Visit Experience Centers',
