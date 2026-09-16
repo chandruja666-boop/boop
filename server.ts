@@ -52,9 +52,11 @@ function readDatabase(): Database {
 }
 
 function writeDatabase(database: Database): void {
-    const temporaryPath = `${databasePath}.tmp`;
-    fs.writeFileSync(temporaryPath, JSON.stringify(database, null, 2));
-    fs.renameSync(temporaryPath, databasePath);
+    try {
+        fs.writeFileSync(databasePath, JSON.stringify(database, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Error writing database:', error);
+    }
 }
 
 function publish(event: string, payload: unknown): void {
