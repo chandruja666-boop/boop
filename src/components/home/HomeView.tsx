@@ -36,7 +36,6 @@ export const HomeView: React.FC = () => {
     showToast
   } = useApp();
 
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [activeRoomTab, setActiveRoomTab] = useState<string>('Living Room');
   const [consultationSubmitted, setConsultationSubmitted] = useState(false);
   const [consultName, setConsultName] = useState('');
@@ -70,22 +69,10 @@ export const HomeView: React.FC = () => {
     }
   };
 
-  const slides = websiteContent.heroSlides;
-
-  // Auto-advance hero slides
-  useEffect(() => {
-    if (!slides || slides.length === 0) return;
-    const interval = setInterval(() => {
-      setCurrentSlideIndex((prev) => (prev + 1) % slides.length);
-    }, 6500);
-    return () => clearInterval(interval);
-  }, [slides]);
-
   const bestSellers = products.filter((p) => p.isBestSeller && p.isPublished).slice(0, 4);
   const newArrivals = products
     .filter((p) => (p.isNewArrival || p.id.startsWith('prod-')) && p.isPublished)
     .slice(0, 4);
-  const trending = products.filter((p) => p.isTrending && p.isPublished).slice(0, 4);
 
   // Live Storefront Products Filtered & Sorted (Newest first)
   const liveStorefrontProducts = useMemo(() => {
@@ -144,11 +131,9 @@ export const HomeView: React.FC = () => {
     showToast('Showroom visit confirmed! Our design consultant will call you within 2 hours.', 'success');
   };
 
-  const currentSlide = slides[currentSlideIndex] || slides[0];
-
   return (
     <div className="space-y-10 sm:space-y-16 pb-24 md:pb-16">
-      {/* 0. AUSPICIOUS FESTIVE HERO BANNER */}
+      {/* 0. STRICTLY LOCKED AUSPICIOUS FESTIVE HERO BANNER (NO ROTATION) */}
       <VinayagarFestiveHero />
 
       {/* 1. FRONT HOME PAGE QUICK DEPARTMENT NAVIGATION STRIP */}
@@ -225,14 +210,12 @@ export const HomeView: React.FC = () => {
                     }}
                     className="flex flex-col items-center gap-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-stone-900 to-stone-950 border border-amber-500/15 hover:border-amber-500/40 hover:shadow-[0_4px_25px_rgba(245,158,11,0.15)] transition-all duration-500 text-center min-w-[110px] sm:min-w-[140px] group cursor-pointer relative"
                   >
-                    {/* Badge container nested neatly */}
                     {dept.badge && (
                       <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 text-stone-950 text-[7px] sm:text-[8px] font-black px-2 py-0.5 rounded-full shadow-md uppercase tracking-wider whitespace-nowrap border border-amber-400/30 z-10">
                         {dept.badge}
                       </span>
                     )}
 
-                    {/* Circle Image Masking with refined padding & zoom effect */}
                     <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 bg-gradient-to-b from-amber-500/20 to-transparent border border-stone-800 group-hover:border-amber-500/30 transition-colors shadow-inner flex items-center justify-center shrink-0">
                       <div className="w-full h-full rounded-full overflow-hidden bg-stone-950 flex items-center justify-center">
                         {categoryData?.image ? (
@@ -257,7 +240,6 @@ export const HomeView: React.FC = () => {
             </div>
           </div>
 
-          {/* Sleek Custom Gold-accented Scroll Progress Indicator */}
           <div className="mt-4 flex justify-center">
             <div className="w-36 h-0.5 bg-stone-850 rounded-full overflow-hidden relative">
               <div
@@ -266,104 +248,6 @@ export const HomeView: React.FC = () => {
               />
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* 2. HERO CAROUSEL - BALANCED VIEWPORT SIZING */}
-      <section className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-3.5 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl overflow-hidden shadow-xl bg-stone-900 text-white">
-          {currentSlide && (
-            <div className={`relative flex items-center transition-all duration-500 ${currentSlide.sizeOption === 'full'
-                ? 'min-h-[450px] sm:min-h-[580px] lg:min-h-[660px]'
-                : currentSlide.sizeOption === 'compact'
-                  ? 'min-h-[300px] sm:min-h-[360px] lg:min-h-[400px]'
-                  : 'min-h-[380px] sm:min-h-[460px] lg:min-h-[500px]'
-              }`}>
-              {/* Background Image with Optical Gradient */}
-              <div className="absolute inset-0 z-0">
-                <img
-                  src={currentSlide.image}
-                  alt={currentSlide.title}
-                  className="w-full h-full object-cover object-center transform scale-102 transition-all duration-1000 ease-out"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/75 to-transparent" />
-                <div className="absolute inset-0 bg-stone-950/20" />
-              </div>
-
-              {/* Slide Content */}
-              <div className="relative z-10 max-w-2xl px-6 sm:px-12 lg:px-14 py-10 sm:py-14 space-y-4 sm:space-y-5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] sm:text-xs font-semibold uppercase tracking-wider backdrop-blur-md">
-                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                  <span>{currentSlide.tagline}</span>
-                  <span className="text-amber-400 font-bold">&bull; {currentSlide.badge}</span>
-                </div>
-
-                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold font-serif-luxury tracking-tight text-white leading-tight">
-                  {currentSlide.title}
-                </h1>
-
-                <p className="text-xs sm:text-sm md:text-base text-stone-300 font-normal leading-relaxed line-clamp-3 max-w-xl">
-                  {currentSlide.subtitle}
-                </p>
-
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <button
-                    id="hero-shop-now-btn"
-                    onClick={() => {
-                      resetFilters();
-                      setCurrentView('shop');
-                    }}
-                    className="px-6 py-3 bg-amber-800 hover:bg-amber-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-lg transition-all flex items-center gap-2 group cursor-pointer"
-                  >
-                    <span>Shop Collection</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-
-                  <button
-                    id="hero-explore-collection-btn"
-                    onClick={() => selectCategoryFromHome(currentSlide.ctaLink)}
-                    className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/30 text-white text-xs sm:text-sm font-semibold rounded-xl backdrop-blur-md transition-all cursor-pointer"
-                  >
-                    {currentSlide.ctaText}
-                  </button>
-                </div>
-              </div>
-
-              {/* Carousel Arrows */}
-              <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2">
-                <button
-                  onClick={() =>
-                    setCurrentSlideIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1))
-                  }
-                  className="p-2 sm:p-2.5 rounded-full bg-stone-900/80 hover:bg-amber-800 text-white border border-stone-700 transition-colors cursor-pointer"
-                  aria-label="Previous slide"
-                >
-                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-                <button
-                  onClick={() => setCurrentSlideIndex((prev) => (prev + 1) % slides.length)}
-                  className="p-2 sm:p-2.5 rounded-full bg-stone-900/80 hover:bg-amber-800 text-white border border-stone-700 transition-colors cursor-pointer"
-                  aria-label="Next slide"
-                >
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-              </div>
-
-              {/* Carousel Dots */}
-              <div className="absolute bottom-6 left-6 sm:left-12 z-20 flex items-center gap-1.5">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentSlideIndex(i)}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${i === currentSlideIndex ? 'w-7 bg-amber-500' : 'w-2 bg-stone-600 hover:bg-stone-500'
-                      }`}
-                    aria-label={`Go to slide ${i + 1}`}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
@@ -509,7 +393,6 @@ export const HomeView: React.FC = () => {
             className="mb-8"
           />
 
-          {/* Smooth Scrollable Room Navigation Tabs on Mobile, Centered on Desktop */}
           <ScrollReveal animation="fade-in" delay={150}>
             <div className="overflow-x-auto no-scrollbar scroll-smooth flex sm:flex-wrap items-center sm:justify-center gap-2 mb-8 pb-1">
               {['Living Room', 'Bedroom', 'Dining', 'Office', 'Mattress', 'Home Decor'].map((tab) => (
@@ -527,7 +410,6 @@ export const HomeView: React.FC = () => {
             </div>
           </ScrollReveal>
 
-          {/* Room Products Display */}
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
             {roomProducts.length > 0 ? (
               roomProducts.map((p, idx) => <ProductCard key={p.id} product={p} index={idx} />)
@@ -549,7 +431,7 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* 7. NEW ARRIVALS & TRENDING */}
+      {/* 7. NEW ARRIVALS */}
       <section className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Fresh Off the Workshop"
@@ -578,7 +460,7 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* 8. LIVE STOREFRONT PRODUCTS LIST (INSTANTLY SHOWS ADMIN ADDITIONS) */}
+      {/* 8. LIVE STOREFRONT PRODUCTS LIST */}
       <section id="storefront-catalog-section" className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           <div className="bg-stone-50/80 border border-stone-200/80 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
@@ -601,7 +483,6 @@ export const HomeView: React.FC = () => {
                 </p>
               </div>
 
-              {/* Quick Search */}
               <div className="relative w-full md:w-72">
                 <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -622,7 +503,6 @@ export const HomeView: React.FC = () => {
               </div>
             </div>
 
-            {/* Category Filter Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
               {['All', ...categories.map((c) => c.name)].map((cat) => (
                 <button
@@ -638,7 +518,6 @@ export const HomeView: React.FC = () => {
               ))}
             </div>
 
-            {/* Products Grid */}
             {liveStorefrontProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
                 {liveStorefrontProducts.slice(0, 8).map((product, idx) => (
@@ -651,7 +530,6 @@ export const HomeView: React.FC = () => {
               </div>
             )}
 
-            {/* View Full Catalog Button */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-stone-200 text-xs text-stone-500">
               <span>
                 Showing {Math.min(8, liveStorefrontProducts.length)} of {liveStorefrontProducts.length} published products
@@ -724,7 +602,7 @@ export const HomeView: React.FC = () => {
         </ScrollReveal>
       </section>
 
-      {/* 9. CUSTOMER REVIEWS */}
+      {/* 10. CUSTOMER REVIEWS */}
       <section className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Real Buyer Feedback"
@@ -812,7 +690,7 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* 10. SHOWROOM EXPERIENCE & LOCATIONS */}
+      {/* 11. SHOWROOM EXPERIENCE & LOCATIONS */}
       <section className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           <div className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-lg p-6 sm:p-10">
