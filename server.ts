@@ -25,7 +25,10 @@ const paymentMode = process.env.PAYMENT_MODE || 'disabled';
 const adminEmail = process.env.ADMIN_EMAIL || 'chandruja666@gmail.com';
 const adminPassword = process.env.ADMIN_PASSWORD || '123';
 const adminSessions = new Map<string, { user: { name: string; email: string; role: string }; expiresAt: number }>();
+
 app.use(express.json({ limit: '10mb' }));
+
+// CORS Policy Configuration allowing Authorization header
 app.use((_req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -40,7 +43,7 @@ app.use((_req, res, next) => {
 function readDatabase(): Database {
     if (!fs.existsSync(databasePath)) {
         const initial: Database = { products: INITIAL_PRODUCTS, orders: INITIAL_ORDERS };
-        fs.writeFileSync(databasePath, JSON.stringify(initial, null, 2));
+        fs.writeFileSync(databasePath, JSON.stringify(initial, null, 2), 'utf8');
         return initial;
     }
 
@@ -53,9 +56,11 @@ function readDatabase(): Database {
 
 function writeDatabase(database: Database): void {
     try {
-        fs.writeFileSync(databasePath, JSON.stringify(database, null, 2), 'utf8');
+        const temporaryPath = `${databasePath}.tmp`;
+        fs.writeFileSync(temporaryPath, JSON.stringify(database, null, 2), 'utf8');
+        fs.renameSync(temporaryPath, databasePath);
     } catch (error) {
-        console.error('Error writing database:', error);
+        console.error('Failed to write database:', error);
     }
 }
 
@@ -187,11 +192,11 @@ app.post('/api/auth/otp/request', async (req, res) => {
         return;
     }
 
-    const isTest = process.env.OTP_MODE === 'test';
+    const otpMode = process.env.OTP_MODE || 'production';
     const code = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = Date.now() + 5 * 60 * 1000;
 
-    if (isTest) {
+    if (otpMode === 'test') {
         otpStore.set(recipient, { codeHash: hash(code), expiresAt, attempts: 0 });
         console.log(`[OTP TEST] ${recipient}: ${code}`);
         res.json({ success: true, expiresAt, testCode: code });
@@ -390,8 +395,6 @@ app.post('/api/sync/seed', (req, res) => {
     res.json({ success: true });
 });
 
-// ... 
-
 const frontendDistPath = path.join(process.cwd(), 'dist');
 if (fs.existsSync(frontendDistPath)) {
     app.use(express.static(frontendDistPath));
@@ -399,6 +402,7 @@ if (fs.existsSync(frontendDistPath)) {
         res.sendFile(path.join(frontendDistPath, 'index.html'));
     });
 }
+
 app.listen(port, () => {
     console.log(`CP Furniture cloud backend listening on http://localhost:${port}`);
 });
