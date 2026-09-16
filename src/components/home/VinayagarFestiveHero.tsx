@@ -189,13 +189,12 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
             </div>
           </div>
 
-          {/* Right Visual Motif & Fixed Stable Grand Offer Image */}
+          {/* Right Visual Motif & Strictly Locked Stable Grand Offer Image */}
           <div className="lg:col-span-5 relative">
             <div className="relative rounded-3xl overflow-hidden border border-amber-500/40 shadow-2xl bg-stone-950 group">
-              {/* Stable Single Custom Image Selected by Admin */}
               <div className="aspect-[4/3] sm:aspect-[16/11] relative overflow-hidden bg-stone-950">
                 <img
-                  src={banner.image || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80'}
+                  src={banner.image}
                   alt="Vinayagar Chathurthi Grand Offer Collection"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   referrerPolicy="no-referrer"
