@@ -67,14 +67,23 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left / Center Content Column */}
           <div className="lg:col-span-7 space-y-5 text-left">
-            {/* Auspicious Badge & Diya Indicator */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 text-xs font-semibold tracking-wide shadow-sm">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-xs">
-                🪔
-              </span>
-              <span className="font-serif-luxury font-bold uppercase tracking-wider text-[11px] sm:text-xs">
-                {displayBadge}
-              </span>
+            {/* Auspicious Badge & Running Premium Offer Ticker */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 text-xs font-semibold tracking-wide shadow-sm w-fit">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-xs">
+                  🪔
+                </span>
+                <span className="font-serif-luxury font-bold uppercase tracking-wider text-[11px] sm:text-xs">
+                  {displayBadge}
+                </span>
+              </div>
+
+              {/* Running Premium Offer Marquee */}
+              <div className="overflow-hidden whitespace-nowrap bg-amber-500/10 border border-amber-500/30 rounded-full px-3 py-1 text-xs text-amber-300 font-medium">
+                <div className="inline-block animate-marquee">
+                  <span className="mx-4">✨ PREMIUM FESTIVE COLLECTION • EXCLUSIVE HANDCRAFTED TEAKWOOD • LIMITED TIME GRAND OFFER ✨</span>
+                </div>
+              </div>
             </div>
 
             {/* Headline with Luxury Gold Gradient */}
@@ -120,8 +129,8 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
                   type="button"
                   onClick={handleCopyCode}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow ${copied
-                      ? 'bg-emerald-500 text-stone-950'
-                      : 'bg-amber-500 hover:bg-amber-400 text-stone-950 active:scale-95'
+                    ? 'bg-emerald-500 text-stone-950'
+                    : 'bg-amber-500 hover:bg-amber-400 text-stone-950 active:scale-95'
                     }`}
                   title="Click to copy festive coupon code"
                 >
@@ -180,14 +189,14 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
             </div>
           </div>
 
-          {/* Right Visual Motif & Luxury Furniture Stage */}
+          {/* Right Visual Motif & Fixed Stable Grand Offer Image */}
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl overflow-hidden border border-amber-500/40 shadow-2xl bg-stone-900 group">
-              {/* Furniture Image */}
+            <div className="relative rounded-3xl overflow-hidden border border-amber-500/40 shadow-2xl bg-stone-950 group">
+              {/* Stable Single Custom Image Selected by Admin */}
               <div className="aspect-[4/3] sm:aspect-[16/11] relative overflow-hidden bg-stone-950">
                 <img
                   src={banner.image || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80'}
-                  alt="Vinayagar Chathurthi Luxury Furniture Collection"
+                  alt="Vinayagar Chathurthi Grand Offer Collection"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   referrerPolicy="no-referrer"
                 />
