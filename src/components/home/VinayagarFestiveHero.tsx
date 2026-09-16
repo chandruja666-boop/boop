@@ -45,7 +45,7 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
     .trim();
   const displayBadge = cleanedBadgeText.startsWith('🕉️') ? cleanedBadgeText : `🕉️ ${cleanedBadgeText}`;
 
-  // Force direct permanent image URL to prevent device caching/dropping issues
+  // Use Admin uploaded image dynamically with fallback if empty
   const bannerImage = banner.image && banner.image.trim() !== ''
     ? banner.image
     : 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80';
@@ -194,7 +194,7 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
             </div>
           </div>
 
-          {/* Right Visual Motif & Strictly Locked Stable Grand Offer Image */}
+          {/* Right Visual Motif & Admin Dynamic Image Stage */}
           <div className="lg:col-span-5 relative">
             <div className="relative rounded-3xl overflow-hidden border border-amber-500/40 shadow-2xl bg-stone-950 group">
               <div className="aspect-[4/3] sm:aspect-[16/11] relative overflow-hidden bg-stone-950">
