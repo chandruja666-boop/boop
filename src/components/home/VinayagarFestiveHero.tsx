@@ -134,8 +134,8 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
                   type="button"
                   onClick={handleCopyCode}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow ${copied
-                      ? 'bg-emerald-500 text-stone-950'
-                      : 'bg-amber-500 hover:bg-amber-400 text-stone-950 active:scale-95'
+                    ? 'bg-emerald-500 text-stone-950'
+                    : 'bg-amber-500 hover:bg-amber-400 text-stone-950 active:scale-95'
                     }`}
                   title="Click to copy festive coupon code"
                 >
