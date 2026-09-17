@@ -959,19 +959,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...(data.festiveBanner || {})
       }
     };
+
+    // Save to local storage first for instant responsiveness
     storage.saveContent(updated);
+    setWebsiteContent(updated);
+
     storage.addAdminActivityLog({
       action: 'Content Updated',
       details: `Modified storefront configuration settings or homepage sliders`,
       category: 'banner',
       adminEmail: adminUser?.email || 'admin@cpfurniture.com'
     });
-    setWebsiteContent(updated);
-    void cloudApi.saveContent(updated).then(() => refreshData()).catch((error) => {
-      console.warn('Website content cloud sync failed:', error);
-    });
-    refreshData();
-    showToast('Showroom storefront configuration saved!', 'success');
+
+    // Push and force-sync immediately to Cloud Backend so it persists permanently on Render
+    void cloudApi.saveContent(updated)
+      .then(() => {
+        refreshData();
+        showToast('Showroom storefront configuration permanently saved to cloud!', 'success');
+      })
+      .catch((error) => {
+        console.warn('Website content cloud sync failed:', error);
+        showToast('Saved locally, but cloud sync failed. Please check connection.', 'warning');
+      });
   };
 
   const printOrderInvoice = (orderId: string) => {
