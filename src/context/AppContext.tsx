@@ -284,7 +284,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ]);
       setProducts(cloudProducts);
       setOrders(cloudOrders);
-      setWebsiteContent(cloudContent);
+
+      // Securely merge cloud content while strictly preserving local admin image uploads
+      if (cloudContent && cloudContent.festiveBanner) {
+        const localCurrent = storage.getContent();
+        const mergedContent = {
+          ...cloudContent,
+          festiveBanner: {
+            ...cloudContent.festiveBanner,
+            ...(localCurrent.festiveBanner?.image && localCurrent.festiveBanner.image !== ''
+              ? { image: localCurrent.festiveBanner.image }
+              : {})
+          }
+        };
+        setWebsiteContent(mergedContent);
+        storage.saveContent(mergedContent);
+      }
+
       cloudProducts.forEach((product) => storage.saveProduct(product));
       cloudOrders.forEach((order) => storage.saveOrderToSecureBackup(order));
     } catch (error) {
@@ -858,7 +874,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteSubcategory = (catId: string, subName: string): boolean => {
     const trimmedSub = (subName || '').trim();
-    // Instant local state update for zero lag
     setCategories((prev) =>
       prev.map((c) =>
         c.id === catId
@@ -935,7 +950,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateWebsiteContent = (data: Partial<WebsiteContent>) => {
-    const updated = { ...websiteContent, ...data };
+    const current = storage.getContent();
+    const updated = {
+      ...current,
+      ...data,
+      festiveBanner: {
+        ...(current.festiveBanner || {}),
+        ...(data.festiveBanner || {})
+      }
+    };
     storage.saveContent(updated);
     storage.addAdminActivityLog({
       action: 'Content Updated',
