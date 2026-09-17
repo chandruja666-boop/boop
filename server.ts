@@ -107,7 +107,11 @@ app.get('/api/content', (_req, res) => {
 
 app.put('/api/content', (req, res) => {
     const database = readDatabase();
-    database.websiteContent = req.body;
+    // Securely merge content so admin uploads never get lost or reset
+    database.websiteContent = {
+        ...(database.websiteContent || INITIAL_WEBSITE_CONTENT),
+        ...req.body
+    };
     writeDatabase(database);
     publish('content.updated', database.websiteContent);
     res.json(database.websiteContent);
