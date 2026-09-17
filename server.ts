@@ -107,10 +107,14 @@ app.get('/api/content', (_req, res) => {
 
 app.put('/api/content', (req, res) => {
     const database = readDatabase();
-    // Securely merge content so admin uploads never get lost or reset
+    // Securely deep merge website content and festive banner so admin updates persist permanently
     database.websiteContent = {
         ...(database.websiteContent || INITIAL_WEBSITE_CONTENT),
-        ...req.body
+        ...req.body,
+        festiveBanner: {
+            ...((database.websiteContent as any)?.festiveBanner || (INITIAL_WEBSITE_CONTENT as any).festiveBanner || {}),
+            ...((req.body as any)?.festiveBanner || {})
+        }
     };
     writeDatabase(database);
     publish('content.updated', database.websiteContent);
