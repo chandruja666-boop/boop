@@ -45,11 +45,14 @@ export const VinayagarFestiveHero: React.FC<VinayagarFestiveHeroProps> = ({ conf
     .trim();
   const displayBadge = cleanedBadgeText.startsWith('🕉️') ? cleanedBadgeText : `🕉️ ${cleanedBadgeText}`;
 
-  // Use Admin uploaded image dynamically with fallback if empty
-  const bannerImage = banner.image && banner.image.trim() !== ''
+  // Use Admin uploaded image dynamically with cache-busting timestamp to update instantly across all devices
+  const rawBannerImage = banner.image && banner.image.trim() !== ''
     ? banner.image
     : 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80';
 
+  const bannerImage = rawBannerImage.startsWith('data:image/') || rawBannerImage.includes('v=')
+    ? rawBannerImage
+    : `${rawBannerImage}${rawBannerImage.includes('?') ? '&' : '?'}v=${Date.now()}`;
   const handleCopyCode = () => {
     navigator.clipboard.writeText(banner.code);
     setCopied(true);
