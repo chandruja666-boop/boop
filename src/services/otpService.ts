@@ -98,10 +98,10 @@ class OTPService {
     let response;
     try {
       response = await cloudApi.requestOtp(raw10);
-    } catch {
+    } catch (error) {
       return {
         success: false,
-        message: 'OTP service is unavailable. Please try again shortly.',
+        message: error instanceof Error ? error.message : 'OTP service is unavailable. Please try again shortly.',
         phone: rawPhone,
         normalizedPhone: normalized,
         expiresAt: 0,

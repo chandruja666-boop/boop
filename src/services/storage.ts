@@ -224,6 +224,10 @@ class StorageService {
     );
   }
 
+  replaceCategories(categories: Category[]): void {
+    setStorage(KEYS.CATEGORIES, categories);
+  }
+
   saveCategory(category: Category): void {
     const cats = this.getCategories();
     const idx = cats.findIndex((c) => c.id === category.id);
@@ -343,7 +347,7 @@ class StorageService {
           if (raw) {
             try {
               merged.push(JSON.parse(raw));
-            } catch (e) {}
+            } catch (e) { }
           }
         }
       });
@@ -379,7 +383,7 @@ class StorageService {
           if (raw) {
             try {
               merged.push(JSON.parse(raw));
-            } catch (e) {}
+            } catch (e) { }
           }
         }
       });
@@ -440,18 +444,18 @@ class StorageService {
       password: data.password,
       addresses: data.address
         ? [
-            {
-              id: `addr-${Date.now()}`,
-              type: 'Home',
-              name: data.name,
-              phone: data.phone,
-              street: data.address,
-              city: 'Bengaluru',
-              state: 'Karnataka',
-              pincode: '560001',
-              isDefault: true
-            }
-          ]
+          {
+            id: `addr-${Date.now()}`,
+            type: 'Home',
+            name: data.name,
+            phone: data.phone,
+            street: data.address,
+            city: 'Bengaluru',
+            state: 'Karnataka',
+            pincode: '560001',
+            isDefault: true
+          }
+        ]
         : [],
       wishlist: [],
       cart: [],
@@ -1044,14 +1048,6 @@ class StorageService {
   // COUPONS
   getCoupons(): Coupon[] {
     const rawCoupons = getStorage<Coupon[]>(KEYS.COUPONS, INITIAL_COUPONS);
-    const hasWelcome25 = rawCoupons.some((c) => c.code.toUpperCase() === 'WELCOME25');
-    if (!hasWelcome25) {
-      const welcomeCoupon = INITIAL_COUPONS.find((c) => c.code === 'WELCOME25');
-      if (welcomeCoupon) {
-        rawCoupons.unshift(welcomeCoupon);
-        setStorage(KEYS.COUPONS, rawCoupons);
-      }
-    }
     return rawCoupons.map((c) => ({
       ...c,
       id: c.id || c.code,
@@ -1059,6 +1055,10 @@ class StorageService {
       minOrderValue: c.minOrderValue ?? 0,
       discountValue: c.discountValue ?? 0
     }));
+  }
+
+  replaceCoupons(coupons: Coupon[]): void {
+    setStorage(KEYS.COUPONS, coupons);
   }
 
   saveCoupon(coupon: Coupon): void {

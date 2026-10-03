@@ -18,6 +18,7 @@ import {
 } from '../types';
 import { storage } from '../services/storage';
 import { cloudApi } from '../services/cloudApi';
+import { INITIAL_WEBSITE_CONTENT } from '../services/mockData';
 
 export type AppView =
   | 'home'
@@ -277,29 +278,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     try {
-      const [cloudProducts, cloudOrders, cloudContent] = await Promise.all([
+      const [cloudProducts, cloudOrders, cloudContent, cloudCatalog] = await Promise.all([
         cloudApi.getProducts(),
         cloudApi.getOrders(),
-        cloudApi.getContent()
+        cloudApi.getContent(),
+        cloudApi.getCatalog()
       ]);
       setProducts(cloudProducts);
       setOrders(cloudOrders);
 
-      // Securely merge cloud content while strictly preserving local admin image uploads
-      if (cloudContent && cloudContent.festiveBanner) {
-        const localCurrent = storage.getContent();
-        const mergedContent = {
-          ...cloudContent,
-          festiveBanner: {
-            ...cloudContent.festiveBanner,
-            ...(localCurrent.festiveBanner?.image && localCurrent.festiveBanner.image !== ''
-              ? { image: localCurrent.festiveBanner.image }
-              : {})
-          }
-        };
-        setWebsiteContent(mergedContent);
-        storage.saveContent(mergedContent);
-      }
+      setCategories(cloudCatalog.categories);
+      setCoupons(cloudCatalog.coupons);
+      storage.replaceCategories(cloudCatalog.categories);
+      storage.replaceCoupons(cloudCatalog.coupons);
+      setWebsiteContent(cloudContent);
+      storage.saveContent(cloudContent);
 
       cloudProducts.forEach((product) => storage.saveProduct(product));
       cloudOrders.forEach((order) => storage.saveOrderToSecureBackup(order));
@@ -762,8 +755,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isNewArrival: prod.isNewArrival !== undefined ? prod.isNewArrival : true
     };
     storage.saveProduct(newProd);
-    void cloudApi.saveProduct(newProd).then(() => refreshData()).catch((error) => {
+    void cloudApi.saveProduct(newProd).then(() => {
+      refreshData();
+      showToast(`Product "${newProd.name}" added and synced to the storefront.`, 'success');
+    }).catch((error) => {
       console.warn('Product cloud sync failed:', error);
+      showToast('Product is only saved on this device; cloud sync failed.', 'error');
     });
     storage.addAdminActivityLog({
       action: 'Product Added',
@@ -772,13 +769,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminEmail: adminUser?.email || 'admin@cpfurniture.com'
     });
     refreshData();
-    showToast(`Product "${newProd.name}" added successfully! Visible on customer storefront.`, 'success');
   };
 
   const updateProduct = (prod: Product) => {
     storage.saveProduct(prod);
-    void cloudApi.saveProduct(prod).then(() => refreshData()).catch((error) => {
+    void cloudApi.saveProduct(prod).then(() => {
+      refreshData();
+      showToast(`Product "${prod.name}" updated across devices.`, 'success');
+    }).catch((error) => {
       console.warn('Product cloud sync failed:', error);
+      showToast('Product is only saved on this device; cloud sync failed.', 'error');
     });
     storage.addAdminActivityLog({
       action: 'Product Updated',
@@ -787,14 +787,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminEmail: adminUser?.email || 'admin@cpfurniture.com'
     });
     refreshData();
-    showToast(`Product "${prod.name}" updated successfully.`, 'success');
   };
 
   const deleteProduct = (prodId: string) => {
     const name = storage.getProductById(prodId)?.name || prodId;
     storage.deleteProduct(prodId);
-    void cloudApi.deleteProduct(prodId).then(() => refreshData()).catch((error) => {
+    void cloudApi.deleteProduct(prodId).then(() => {
+      refreshData();
+      showToast('Product removed from the shared catalog.', 'info');
+    }).catch((error) => {
       console.warn('Product deletion cloud sync failed:', error);
+      showToast('Product could not be deleted from the shared catalog.', 'error');
     });
     storage.addAdminActivityLog({
       action: 'Product Deleted',
@@ -803,7 +806,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminEmail: adminUser?.email || 'admin@cpfurniture.com'
     });
     refreshData();
-    showToast('Product removed from catalog.', 'info');
   };
 
   const addCategory = (cat: any) => {
@@ -812,6 +814,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: cat.id || `cat-${Date.now()}`
     };
     storage.saveCategory(newCat);
+    void cloudApi.saveCategory(newCat).then(() => {
+      refreshData();
+      showToast(`Category "${newCat.name}" synced to the storefront.`, 'success');
+    }).catch((error) => {
+      console.warn('Category cloud sync failed:', error);
+      showToast('Category is only saved on this device; cloud sync failed.', 'error');
+    });
     storage.addAdminActivityLog({
       action: 'Category Added',
       details: `Created new department "${newCat.name}" with initial setup`,
@@ -819,11 +828,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminEmail: adminUser?.email || 'admin@cpfurniture.com'
     });
     refreshData();
-    showToast(`Category "${newCat.name}" added to catalog navigation.`, 'success');
   };
 
   const updateCategory = (cat: Category) => {
     storage.saveCategory(cat);
+    void cloudApi.saveCategory(cat).then(() => {
+      refreshData();
+      showToast(`Category "${cat.name}" updated across devices.`, 'success');
+    }).catch((error) => {
+      console.warn('Category cloud sync failed:', error);
+      showToast('Category is only saved on this device; cloud sync failed.', 'error');
+    });
     storage.addAdminActivityLog({
       action: 'Category Updated',
       details: `Modified department "${cat.name}" layout details or image banner`,
@@ -831,12 +846,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminEmail: adminUser?.email || 'admin@cpfurniture.com'
     });
     refreshData();
-    showToast(`Category "${cat.name}" updated.`, 'success');
   };
 
   const deleteCategory = (catId: string) => {
     const name = categories.find((c) => c.id === catId)?.name || catId;
     storage.deleteCategory(catId);
+    void cloudApi.deleteCategory(catId).then(() => {
+      refreshData();
+      showToast('Category deleted from the shared catalog.', 'info');
+    }).catch((error) => {
+      console.warn('Category deletion cloud sync failed:', error);
+      showToast('Category could not be deleted from the shared catalog.', 'error');
+    });
     storage.addAdminActivityLog({
       action: 'Category Deleted',
       details: `Deleted department "${name}" (ID: ${catId}) from taxonomy`,
@@ -844,7 +865,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminEmail: adminUser?.email || 'admin@cpfurniture.com'
     });
     refreshData();
-    showToast('Category deleted.', 'info');
   };
 
   const renameSubcategory = (catId: string, oldSub: string, newSub: string): boolean => {
@@ -853,8 +873,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast('Subcategory name cannot be empty.', 'error');
       return false;
     }
+    const targetCategory = storage.getCategories().find((category) => category.id === catId);
+    const changedProductIds = storage.getProducts()
+      .filter((product) => product.category.toLowerCase() === targetCategory?.name.toLowerCase() && product.subcategory === oldSub.trim())
+      .map((product) => product.id);
     const result = storage.renameSubcategory(catId, oldSub, trimmedNew);
     if (result.success) {
+      const updatedCategory = storage.getCategories().find((category) => category.id === catId);
+      if (updatedCategory) void cloudApi.saveCategory(updatedCategory).catch((error) => {
+        console.warn('Subcategory cloud sync failed:', error);
+        showToast('Subcategory is only saved on this device; cloud sync failed.', 'error');
+      });
+      changedProductIds.forEach((productId) => {
+        const product = storage.getProductById(productId);
+        if (product) void cloudApi.saveProduct(product).catch((error) => {
+          console.warn('Product subcategory cloud sync failed:', error);
+          showToast('Some product subcategory changes did not sync to the backend.', 'error');
+        });
+      });
       storage.addAdminActivityLog({
         action: 'Subcategory Renamed',
         details: `Renamed subcategory "${oldSub}" to "${trimmedNew}" across ${result.count} products`,
@@ -874,6 +910,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteSubcategory = (catId: string, subName: string): boolean => {
     const trimmedSub = (subName || '').trim();
+    const targetCategory = storage.getCategories().find((category) => category.id === catId);
+    const changedProductIds = storage.getProducts()
+      .filter((product) => product.category.toLowerCase() === targetCategory?.name.toLowerCase() && product.subcategory?.trim() === trimmedSub)
+      .map((product) => product.id);
     setCategories((prev) =>
       prev.map((c) =>
         c.id === catId
@@ -889,6 +929,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const result = storage.deleteSubcategory(catId, subName);
     if (result.success) {
+      const updatedCategory = storage.getCategories().find((category) => category.id === catId);
+      if (updatedCategory) void cloudApi.saveCategory(updatedCategory).catch((error) => {
+        console.warn('Subcategory cloud sync failed:', error);
+        showToast('Subcategory is only saved on this device; cloud sync failed.', 'error');
+      });
+      changedProductIds.forEach((productId) => {
+        const product = storage.getProductById(productId);
+        if (product) void cloudApi.saveProduct(product).catch((error) => {
+          console.warn('Product subcategory cloud sync failed:', error);
+          showToast('Some product subcategory changes did not sync to the backend.', 'error');
+        });
+      });
       storage.addAdminActivityLog({
         action: 'Subcategory Deleted',
         details: `Deleted subcategory "${trimmedSub}" from category ID: ${catId}`,
@@ -914,6 +966,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     storage.updateOrderStatus(orderId, status);
     void cloudApi.updateOrderStatus(orderId, status).then(() => refreshData()).catch((error) => {
       console.warn('Order status cloud sync failed:', error);
+      showToast('Order status could not be synchronized to the shared backend.', 'error');
     });
     storage.addAdminActivityLog({
       action: 'Order Fulfilled',
@@ -927,6 +980,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addCoupon = (coupon: any) => {
     storage.saveCoupon(coupon);
+    void cloudApi.saveCoupon(coupon).then(() => {
+      refreshData();
+      showToast(`Coupon ${coupon.code} synced across devices.`, 'success');
+    }).catch((error) => {
+      console.warn('Coupon cloud sync failed:', error);
+      showToast('Coupon is only saved on this device; cloud sync failed.', 'error');
+    });
     storage.addAdminActivityLog({
       action: 'Coupon Created',
       details: `Created promo discount code "${coupon.code}" (${coupon.discountValue}% Off)`,
@@ -934,11 +994,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminEmail: adminUser?.email || 'admin@cpfurniture.com'
     });
     refreshData();
-    showToast(`Coupon code ${coupon.code} created!`, 'success');
   };
 
   const deleteCoupon = (couponCode: string) => {
     storage.deleteCoupon(couponCode);
+    void cloudApi.deleteCoupon(couponCode).then(() => {
+      refreshData();
+      showToast(`Coupon ${couponCode} deleted across devices.`, 'info');
+    }).catch((error) => {
+      console.warn('Coupon deletion cloud sync failed:', error);
+      showToast('Coupon could not be deleted from the shared backend.', 'error');
+    });
     storage.addAdminActivityLog({
       action: 'Coupon Deleted',
       details: `Removed promo code "${couponCode}"`,
@@ -946,40 +1012,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminEmail: adminUser?.email || 'admin@cpfurniture.com'
     });
     refreshData();
-    showToast(`Coupon ${couponCode} deleted.`, 'info');
   };
 
   const updateWebsiteContent = (data: Partial<WebsiteContent>) => {
-    const current = storage.getContent();
-    const updated = {
-      ...current,
-      ...data,
-      festiveBanner: {
-        ...(current.festiveBanner || {}),
-        ...(data.festiveBanner || {})
-      }
-    };
-
-    // Save to local storage first for instant responsiveness
-    storage.saveContent(updated);
-    setWebsiteContent(updated);
-
-    storage.addAdminActivityLog({
-      action: 'Content Updated',
-      details: `Modified storefront configuration settings or homepage sliders`,
-      category: 'banner',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
-    });
-
-    // Push and force-sync immediately to Cloud Backend so it persists permanently on Render
-    void cloudApi.saveContent(updated)
-      .then(() => {
-        refreshData();
-        showToast('Showroom storefront configuration permanently saved to cloud!', 'success');
+    void cloudApi.saveContent(data)
+      .then((savedContent) => {
+        setWebsiteContent(savedContent);
+        storage.saveContent(savedContent);
+        storage.addAdminActivityLog({
+          action: 'Content Updated',
+          details: 'Modified storefront configuration settings or homepage sliders',
+          category: 'banner',
+          adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+        });
+        showToast('Storefront changes synced across devices.', 'success');
       })
       .catch((error) => {
         console.warn('Website content cloud sync failed:', error);
-        showToast('Saved locally, but cloud sync failed. Please check connection.', 'warning');
+        showToast('Could not save to the shared storefront. Your change was not saved; check the connection or admin login.', 'error');
       });
   };
 

@@ -1,12 +1,20 @@
-import { Order, Product, WebsiteContent } from '../types';
+import { Category, Coupon, Order, Product, WebsiteContent } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_ORDERS } from './mockData';
 
-const API_BASE = 'https://cp-furniture-backend.onrender.com/api';
+const API_BASE = (
+    import.meta.env.VITE_API_BASE_URL?.trim() ||
+    (import.meta.env.PROD ? 'https://cp-furniture.in/api' : '/api')
+).replace(/\/+$/, '');
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+    const headers = new Headers(options?.headers);
+    if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+    const adminToken = localStorage.getItem('cp_admin_session_token');
+    if (adminToken && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${adminToken}`);
     const response = await fetch(`${API_BASE}${path}`, {
-        headers: { 'Content-Type': 'application/json' },
-        ...options
+        ...options,
+        cache: 'no-store',
+        headers
     });
 
     if (!response.ok) {
@@ -26,13 +34,17 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const cloudApi = {
     subscribe(onEvent: (event: string) => void): () => void {
         const events = new EventSource(`${API_BASE}/events`);
-        ['products.updated', 'orders.updated', 'content.updated', 'payment.updated'].forEach((event) => {
+        ['products.updated', 'orders.updated', 'content.updated', 'catalog.updated', 'payment.updated', 'data.updated'].forEach((event) => {
             events.addEventListener(event, () => onEvent(event));
         });
         return () => events.close();
     },
     async getProducts(): Promise<Product[]> {
         return request<Product[]>('/products');
+    },
+
+    async getCatalog(): Promise<{ categories: Category[]; coupons: Coupon[] }> {
+        return request('/catalog');
     },
 
     async getOrders(): Promise<Order[]> {
@@ -43,8 +55,24 @@ export const cloudApi = {
         return request<WebsiteContent>('/content');
     },
 
-    async saveContent(content: WebsiteContent): Promise<WebsiteContent> {
+    async saveContent(content: Partial<WebsiteContent>): Promise<WebsiteContent> {
         return request<WebsiteContent>('/content', { method: 'PUT', body: JSON.stringify(content) });
+    },
+
+    async saveCategory(category: Category): Promise<Category> {
+        return request<Category>(`/categories/${encodeURIComponent(category.id)}`, { method: 'PUT', body: JSON.stringify(category) });
+    },
+
+    async deleteCategory(categoryId: string): Promise<void> {
+        await request<{ success: boolean }>(`/categories/${encodeURIComponent(categoryId)}`, { method: 'DELETE' });
+    },
+
+    async saveCoupon(coupon: Coupon): Promise<Coupon> {
+        return request<Coupon>(`/coupons/${encodeURIComponent(coupon.code)}`, { method: 'PUT', body: JSON.stringify(coupon) });
+    },
+
+    async deleteCoupon(couponCode: string): Promise<void> {
+        await request<{ success: boolean }>(`/coupons/${encodeURIComponent(couponCode)}`, { method: 'DELETE' });
     },
 
     async saveProduct(product: Product): Promise<Product> {
@@ -90,8 +118,8 @@ export const cloudApi = {
         return request('/auth/admin/session', { headers: { Authorization: `Bearer ${token}` } });
     },
 
-    async createRazorpayOrder(amount: number, receipt: string): Promise<{ id: string; amount: number; currency: string; testMode?: boolean; keyId?: string }> {
-        return request('/payments/razorpay/order', { method: 'POST', body: JSON.stringify({ amount, receipt }) });
+    async createRazorpayOrder(amount: number, currency: string, receipt: string, items: Array<{ productId: string; quantity: number }>, couponCode?: string): Promise<{ id: string; amount: number; currency: string; testMode?: boolean; keyId?: string }> {
+        return request('/payments/razorpay/order', { method: 'POST', body: JSON.stringify({ amount, currency, receipt, items, couponCode }) });
     },
 
     async verifyRazorpayPayment(orderId: string, paymentId: string, signature: string, amount: number): Promise<{ verified: boolean }> {

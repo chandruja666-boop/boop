@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard,
   BarChart3,
@@ -291,10 +291,21 @@ export const AdminView: React.FC = () => {
   const [fDiscountText, setFDiscountText] = useState(websiteContent.festiveBanner?.discountText || 'EXTRA 15% OFF');
   const [fExpiryText, setFExpiryText] = useState(websiteContent.festiveBanner?.expiryText || 'Valid Till Chaturthi Weekend');
   const [fImage, setFImage] = useState(websiteContent.festiveBanner?.image || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80');
+  const lastSyncedFestiveImage = useRef(websiteContent.festiveBanner?.image || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80');
   const [fCtaText, setFCtaText] = useState(websiteContent.festiveBanner?.ctaText || 'Explore Festive Collection');
   const [fCtaLink, setFCtaLink] = useState(websiteContent.festiveBanner?.ctaLink || 'shop');
   const [fSecondaryCtaText, setFSecondaryCtaText] = useState(websiteContent.festiveBanner?.secondaryCtaText || 'Visit Experience Centers');
   const [fSecondaryCtaLink, setFSecondaryCtaLink] = useState(websiteContent.festiveBanner?.secondaryCtaLink || 'showrooms');
+
+  useEffect(() => {
+    const fallbackImage = 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80';
+    const remoteImage = websiteContent.festiveBanner?.image || fallbackImage;
+    setFImage((currentImage) => {
+      if (currentImage === lastSyncedFestiveImage.current || currentImage === fallbackImage) return remoteImage;
+      return currentImage;
+    });
+    lastSyncedFestiveImage.current = remoteImage;
+  }, [websiteContent.festiveBanner?.image]);
 
   // Experience Centers (Showroom) Management State
   const [showShowroomModal, setShowShowroomModal] = useState(false);
@@ -536,9 +547,9 @@ export const AdminView: React.FC = () => {
       'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80'
     ]);
     setPWarranty(prod.warranty);
-    setPIsBestSeller(prod.isBestSeller);
-    setPIsNewArrival(prod.isNewArrival);
-    setPIsTrending(prod.isTrending);
+    setPIsBestSeller(prod.isBestSeller ?? false);
+    setPIsNewArrival(prod.isNewArrival ?? false);
+    setPIsTrending(prod.isTrending ?? false);
 
     // Load new custom tab fields
     setPCraftsmanshipHighlights(
@@ -917,7 +928,7 @@ export const AdminView: React.FC = () => {
         secondaryCtaLink: fSecondaryCtaLink.trim()
       }
     });
-    showToast('Vinayagar Chathurthi Hero Banner settings saved successfully.', 'success');
+    showToast('Saving festive banner to the shared storefront...', 'info');
   };
 
   // Toggle Festive Banner Switch
@@ -939,12 +950,7 @@ export const AdminView: React.FC = () => {
         secondaryCtaLink: fSecondaryCtaLink.trim()
       }
     });
-    showToast(
-      enabled
-        ? '🕉️ Festive Hero Banner is now ENABLED on customer home page.'
-        : 'Festive Hero Banner is now HIDDEN from customer home page.',
-      enabled ? 'success' : 'info'
-    );
+    showToast('Saving festive banner status to the shared storefront...', 'info');
   };
 
   // Toggle Announcement Banner Switch
@@ -2803,10 +2809,10 @@ export const AdminView: React.FC = () => {
                         <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500 pt-2 border-t border-stone-100">
                           <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-full bg-stone-900 text-amber-400 font-bold flex items-center justify-center text-xs">
-                              {rev.authorName.charAt(0).toUpperCase()}
+                              {(rev.authorName || 'Verified Customer').charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <strong className="text-stone-800">{rev.authorName}</strong>
+                              <strong className="text-stone-800">{rev.authorName || 'Verified Customer'}</strong>
                               <span className="text-stone-400 ml-1.5 font-mono text-[11px]">
                                 ({rev.authorEmail || 'verified@user.com'})
                               </span>
@@ -2863,7 +2869,7 @@ export const AdminView: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    updateCustomerReviewStatus(rev.id, rev.status, tempAdminNote);
+                                    updateCustomerReviewStatus(rev.id, rev.status || 'pending', tempAdminNote);
                                     setEditingNotesReviewId(null);
                                     showToast('Internal audit note saved.', 'success');
                                   }}

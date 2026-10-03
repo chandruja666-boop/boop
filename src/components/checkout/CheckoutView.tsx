@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Address, PaymentMethod, Order, RAZORPAY_CONFIG } from '../../types';
-import { RazorpayPaymentModal } from './RazorpayPaymentModal';
+import { RazorpayPaymentModal } from './RazorpayStandardCheckout.tsx';
 import { UPIQRCodeDisplay } from './UPIQRCodeDisplay';
 
 export const CheckoutView: React.FC = () => {
@@ -1194,12 +1194,13 @@ export const CheckoutView: React.FC = () => {
       <RazorpayPaymentModal
         isOpen={showRazorpayModal}
         onClose={() => setShowRazorpayModal(false)}
-        amount={cartTotal.total}
+        amount={cartTotal.grandTotal}
+        items={cartItems.map(({ product, item }) => ({ productId: product.id, quantity: item.quantity }))}
+        couponCode={appliedCoupon?.code}
         customerName={name || customer?.name || 'CP Client'}
         customerPhone={phone || customer?.phone || '9876543210'}
         customerEmail={customer?.email || 'luxury@cpfurniture.co.in'}
         onPaymentSuccess={handleRazorpaySuccess}
-        shippingAddress={activeAddress}
       />
     </div>
   );
