@@ -6,6 +6,16 @@ const API_BASE = (
     (import.meta.env.PROD ? 'https://cp-furniture.in/api' : '/api')
 ).replace(/\/+$/, '');
 
+interface ApiEnvelope {
+    success: boolean;
+    data?: unknown;
+    message?: string;
+}
+
+function isApiEnvelope(value: unknown): value is ApiEnvelope {
+    return typeof value === 'object' && value !== null && 'success' in value;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const headers = new Headers(options?.headers);
     if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
@@ -28,7 +38,21 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
         throw new Error(message);
     }
 
-    return response.json() as Promise<T>;
+    let responseBody: unknown;
+    try {
+        responseBody = await response.json() as unknown;
+    } catch {
+        throw new Error(`Cloud API returned an invalid response for ${path}.`);
+    }
+
+    if (isApiEnvelope(responseBody)) {
+        if (!responseBody.success) {
+            throw new Error(responseBody.message || `Cloud API request failed: ${path}`);
+        }
+        if ('data' in responseBody) return responseBody.data as T;
+    }
+
+    return responseBody as T;
 }
 
 export const cloudApi = {
@@ -111,7 +135,11 @@ export const cloudApi = {
     },
 
     async adminLogin(email: string, password: string): Promise<{ success: boolean; user?: { name: string; email: string; role: string }; token?: string }> {
-        return request('/auth/admin/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+        const result = await request<Omit<{ success: boolean; user?: { name: string; email: string; role: string }; token?: string }, 'success'> & { success?: boolean }>(
+            '/auth/admin/login',
+            { method: 'POST', body: JSON.stringify({ email, password }) }
+        );
+        return { ...result, success: result.success ?? Boolean(result.user) };
     },
 
     async adminSession(token: string): Promise<{ success: boolean; user?: { name: string; email: string; role: string } }> {

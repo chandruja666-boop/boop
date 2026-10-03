@@ -292,7 +292,7 @@ export const ProductImageUpload: React.FC<ProductImageUploadProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-1.5 text-[11px] text-stone-600 font-medium">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-          <span>Images are converted to base64 Data URLs & stored locally</span>
+          <span>Images sync to other devices after the product saves successfully.</span>
         </div>
 
         <button

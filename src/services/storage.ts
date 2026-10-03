@@ -45,6 +45,7 @@ const KEYS = {
   PURCHASE_ENTRIES: 'cpf_purchase_entries_v1',
   PURCHASING_CREDS: 'cpf_purchasing_creds_v1'
 };
+const SAMPLE_PRODUCT_IDS = new Set(INITIAL_PRODUCTS.map((product) => product.id));
 
 // In-memory fallback layer to guarantee uninterrupted execution even if browser localStorage quota is reached
 const memoryStorage: Record<string, string> = {};
@@ -139,7 +140,16 @@ function setStorage<T>(key: string, val: T): void {
 class StorageService {
   // PRODUCTS
   getProducts(): Product[] {
-    return getStorage<Product[]>(KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    const products = getStorage<Product[]>(KEYS.PRODUCTS, []);
+    const savedProducts = products.filter((product) => !SAMPLE_PRODUCT_IDS.has(product.id));
+    if (savedProducts.length !== products.length) {
+      this.replaceProducts(savedProducts);
+    }
+    return savedProducts;
+  }
+
+  replaceProducts(products: Product[]): void {
+    setStorage(KEYS.PRODUCTS, products);
   }
 
   getProductById(id: string): Product | undefined {

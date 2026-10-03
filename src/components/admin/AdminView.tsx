@@ -490,11 +490,7 @@ export const AdminView: React.FC = () => {
     setPStock(10);
     setPLowStock(3);
     setPDesc('Mastercrafted solid hardwood furniture piece designed for lifetime durability.');
-    setProductImages([
-      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80'
-    ]);
+    setProductImages([]);
     setPWarranty('10-Year Structural Wood Warranty');
     setPIsBestSeller(false);
     setPIsNewArrival(true);
@@ -543,9 +539,7 @@ export const AdminView: React.FC = () => {
     setPStock(prod.stock);
     setPLowStock(prod.lowStockLimit);
     setPDesc(prod.description);
-    setProductImages(prod.images && prod.images.length > 0 ? prod.images : [
-      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80'
-    ]);
+    setProductImages(prod.images || []);
     setPWarranty(prod.warranty);
     setPIsBestSeller(prod.isBestSeller ?? false);
     setPIsNewArrival(prod.isNewArrival ?? false);
@@ -588,6 +582,10 @@ export const AdminView: React.FC = () => {
     e.preventDefault();
 
     const imageArray = productImages.filter(Boolean);
+    if (imageArray.length === 0) {
+      showToast('Upload at least one product image before saving.', 'error');
+      return;
+    }
 
     const discount = pPrice > pSalePrice ? Math.round(((pPrice - pSalePrice) / pPrice) * 100) : 0;
 
@@ -631,7 +629,7 @@ export const AdminView: React.FC = () => {
         stock: Number(pStock),
         lowStockLimit: Number(pLowStock),
         description: pDesc,
-        images: imageArray.length > 0 ? imageArray : editingProduct.images,
+        images: imageArray,
         warranty: pWarranty,
         isBestSeller: pIsBestSeller,
         isNewArrival: pIsNewArrival,
@@ -665,10 +663,7 @@ export const AdminView: React.FC = () => {
         sizes: ['Standard 3-Seater', 'King Size'],
         description: pDesc,
         careInstructions,
-        images:
-          imageArray.length > 0
-            ? imageArray
-            : ['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1000&q=80'],
+        images: imageArray,
         rating: 4.8,
         reviewCount: 1,
         isBestSeller: pIsBestSeller,

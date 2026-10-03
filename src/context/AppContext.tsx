@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import {
   Product,
   Category,
@@ -249,6 +249,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return DEFAULT_INVOICE_SETTINGS;
   });
+  const localCatalogMigrationStarted = useRef(false);
 
   const refreshData = async () => {
     setProducts(storage.getProducts());
@@ -262,11 +263,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setInventoryLogs(storage.getInventoryLogs());
     setAdminActivityLogs(storage.getAdminActivityLogs());
     const adminToken = localStorage.getItem('cp_admin_session_token');
+    let hasValidAdminSession = false;
     if (adminToken) {
       try {
         const session = await cloudApi.adminSession(adminToken);
         setAdminUser(session.user || null);
         setIsAdmin(Boolean(session.user));
+        hasValidAdminSession = Boolean(session.user);
       } catch {
         localStorage.removeItem('cp_admin_session_token');
         setAdminUser(null);
@@ -278,24 +281,62 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     try {
-      const [cloudProducts, cloudOrders, cloudContent, cloudCatalog] = await Promise.all([
+      const [productsResult, ordersResult, contentResult, catalogResult] = await Promise.allSettled([
         cloudApi.getProducts(),
         cloudApi.getOrders(),
         cloudApi.getContent(),
         cloudApi.getCatalog()
       ]);
-      setProducts(cloudProducts);
-      setOrders(cloudOrders);
 
-      setCategories(cloudCatalog.categories);
-      setCoupons(cloudCatalog.coupons);
-      storage.replaceCategories(cloudCatalog.categories);
-      storage.replaceCoupons(cloudCatalog.coupons);
-      setWebsiteContent(cloudContent);
-      storage.saveContent(cloudContent);
+      if (productsResult.status === 'fulfilled') {
+        if (productsResult.value.length > 0) {
+          setProducts(productsResult.value);
+          storage.replaceProducts(productsResult.value);
+        } else {
+          const localProducts = storage.getProducts();
+          setProducts(localProducts);
+          if (hasValidAdminSession && localProducts.length > 0 && !localCatalogMigrationStarted.current) {
+            localCatalogMigrationStarted.current = true;
+            try {
+              for (const product of localProducts) {
+                await cloudApi.saveProduct(product);
+              }
+              const migratedProducts = await cloudApi.getProducts();
+              setProducts(migratedProducts);
+              if (migratedProducts.length > 0) storage.replaceProducts(migratedProducts);
+              showToast('Saved products and images are now synced to the shared catalog.', 'success');
+            } catch (error) {
+              console.warn('Local product migration failed:', error);
+              showToast('Some local products could not sync. Check the backend connection and retry.', 'error');
+            }
+          }
+        }
+      } else {
+        console.warn('Cloud product sync failed:', productsResult.reason);
+      }
 
-      cloudProducts.forEach((product) => storage.saveProduct(product));
-      cloudOrders.forEach((order) => storage.saveOrderToSecureBackup(order));
+      if (ordersResult.status === 'fulfilled') {
+        setOrders(ordersResult.value);
+        ordersResult.value.forEach((order) => storage.saveOrderToSecureBackup(order));
+      } else {
+        console.warn('Cloud order sync failed:', ordersResult.reason);
+      }
+
+      if (contentResult.status === 'fulfilled') {
+        setWebsiteContent(contentResult.value);
+        storage.saveContent(contentResult.value);
+      } else {
+        console.warn('Cloud content sync failed:', contentResult.reason);
+      }
+
+      if (catalogResult.status === 'fulfilled') {
+        setCategories(catalogResult.value.categories);
+        setCoupons(catalogResult.value.coupons);
+        storage.replaceCategories(catalogResult.value.categories);
+        storage.replaceCoupons(catalogResult.value.coupons);
+      } else {
+        console.warn('Cloud catalog sync failed:', catalogResult.reason);
+      }
     } catch (error) {
       console.warn('Cloud sync unavailable; continuing with local cache.', error);
     }

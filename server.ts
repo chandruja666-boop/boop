@@ -58,7 +58,7 @@ app.use((_req, res, next) => {
 
 function readDatabase(): Database {
     if (!fs.existsSync(databasePath)) {
-        const initial: Database = { products: INITIAL_PRODUCTS, orders: INITIAL_ORDERS, categories: INITIAL_CATEGORIES, coupons: INITIAL_COUPONS };
+        const initial: Database = { products: [], orders: INITIAL_ORDERS, categories: INITIAL_CATEGORIES, coupons: INITIAL_COUPONS };
         fs.writeFileSync(databasePath, JSON.stringify(initial, null, 2), 'utf8');
         return initial;
     }
@@ -66,7 +66,7 @@ function readDatabase(): Database {
     try {
         return JSON.parse(fs.readFileSync(databasePath, 'utf8')) as Database;
     } catch {
-        return { products: INITIAL_PRODUCTS, orders: INITIAL_ORDERS, categories: INITIAL_CATEGORIES, coupons: INITIAL_COUPONS };
+        return { products: [], orders: INITIAL_ORDERS, categories: INITIAL_CATEGORIES, coupons: INITIAL_COUPONS };
     }
 }
 
