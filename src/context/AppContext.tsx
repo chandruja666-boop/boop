@@ -776,7 +776,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action,
       details,
       category,
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
   };
@@ -807,7 +807,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Product Added',
       details: `Added new piece "${newProd.name}" (SKU: ${newProd.sku}) to ${newProd.category} at ₹${newProd.salePrice.toLocaleString()}`,
       category: 'product',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
   };
@@ -825,7 +825,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Product Updated',
       details: `Updated details and stock (${prod.stock} left) for "${prod.name}" (SKU: ${prod.sku})`,
       category: 'product',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
   };
@@ -844,7 +844,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Product Deleted',
       details: `Removed "${name}" (ID: ${prodId}) from the catalog`,
       category: 'product',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
   };
@@ -866,7 +866,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Category Added',
       details: `Created new department "${newCat.name}" with initial setup`,
       category: 'category',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
   };
@@ -884,7 +884,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Category Updated',
       details: `Modified department "${cat.name}" layout details or image banner`,
       category: 'category',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
   };
@@ -903,7 +903,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Category Deleted',
       details: `Deleted department "${name}" (ID: ${catId}) from taxonomy`,
       category: 'category',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
   };
@@ -936,7 +936,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         action: 'Subcategory Renamed',
         details: `Renamed subcategory "${oldSub}" to "${trimmedNew}" across ${result.count} products`,
         category: 'category',
-        adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+        adminEmail: 'Admin'
       });
       refreshData();
       showToast(
@@ -986,7 +986,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         action: 'Subcategory Deleted',
         details: `Deleted subcategory "${trimmedSub}" from category ID: ${catId}`,
         category: 'category',
-        adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+        adminEmail: 'Admin'
       });
       refreshData();
       if (result.count > 0) {
@@ -1013,7 +1013,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Order Fulfilled',
       details: `Updated Order ID #${orderId} status to "${status}"`,
       category: 'order',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
     showToast(`Order status updated to "${status}".`, 'success');
@@ -1032,7 +1032,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Coupon Created',
       details: `Created promo discount code "${coupon.code}" (${coupon.discountValue}% Off)`,
       category: 'coupon',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
   };
@@ -1050,7 +1050,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Coupon Deleted',
       details: `Removed promo code "${couponCode}"`,
       category: 'coupon',
-      adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+      adminEmail: 'Admin'
     });
     refreshData();
   };
@@ -1064,7 +1064,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           action: 'Content Updated',
           details: 'Modified storefront configuration settings or homepage sliders',
           category: 'banner',
-          adminEmail: adminUser?.email || 'admin@cpfurniture.com'
+          adminEmail: 'Admin'
         });
         showToast('Storefront changes synced across devices.', 'success');
       })

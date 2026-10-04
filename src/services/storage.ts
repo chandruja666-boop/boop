@@ -40,12 +40,17 @@ const KEYS = {
   ADMIN_NOTIFS: 'cpf_admin_notifs_v1',
   NEWSLETTER: 'cpf_newsletter_subscribers_v1',
   REVIEWS: 'cpf_customer_reviews_v1',
-  ADMIN_CREDENTIALS: 'cpf_admin_credentials_v1',
   ADMIN_ACTIVITY_LOGS: 'cpf_admin_activity_logs_v1',
   PURCHASE_ENTRIES: 'cpf_purchase_entries_v1',
   PURCHASING_CREDS: 'cpf_purchasing_creds_v1'
 };
 const SAMPLE_PRODUCT_IDS = new Set(INITIAL_PRODUCTS.map((product) => product.id));
+
+try {
+  localStorage.removeItem('cpf_admin_credentials_v1');
+} catch (error) {
+  console.warn('Unable to remove legacy browser-stored admin credentials:', error);
+}
 
 // In-memory fallback layer to guarantee uninterrupted execution even if browser localStorage quota is reached
 const memoryStorage: Record<string, string> = {};
@@ -1178,7 +1183,7 @@ class StorageService {
         action: 'Product Added',
         details: 'Luxury Royal Teak Dresser added to bedroom department catalog',
         date: '2026-09-13 10:24',
-        adminEmail: 'admin@cpfurniture.com',
+        adminEmail: 'Admin',
         category: 'product'
       },
       {
@@ -1186,7 +1191,7 @@ class StorageService {
         action: 'Banner Updated',
         details: 'Modified the central homepage hero slide layout with custom high-contrast assets',
         date: '2026-09-13 11:05',
-        adminEmail: 'admin@cpfurniture.com',
+        adminEmail: 'Admin',
         category: 'banner'
       },
       {
@@ -1194,7 +1199,7 @@ class StorageService {
         action: 'Taxonomy Modified',
         details: 'Renamed "Dining Chairs" subcategory to "Bespoke Dining Seating" in Dining Department',
         date: '2026-09-13 14:15',
-        adminEmail: 'admin@cpfurniture.com',
+        adminEmail: 'Admin',
         category: 'category'
       }
     ];
@@ -1208,7 +1213,7 @@ class StorageService {
       date: log.date || new Date().toISOString().replace('T', ' ').substring(0, 16),
       action: log.action,
       details: log.details,
-      adminEmail: log.adminEmail || 'admin@cpfurniture.com',
+      adminEmail: log.adminEmail || 'Admin',
       category: log.category
     };
     logs.unshift(newLog);
@@ -1239,54 +1244,8 @@ class StorageService {
   }
 
   // ADMIN AUTH SESSION
-  getAdminCredentials(): { email: string; pass: string } {
-    return getStorage<{ email: string; pass: string }>(KEYS.ADMIN_CREDENTIALS, {
-      email: 'admin@cpfurniture.com',
-      pass: 'admin123'
-    });
-  }
-
-  saveAdminCredentials(email: string, pass: string): void {
-    setStorage<{ email: string; pass: string }>(KEYS.ADMIN_CREDENTIALS, {
-      email: email.trim().toLowerCase(),
-      pass: pass.trim()
-    });
-  }
-
   isAdminLoggedIn(): boolean {
     return getStorage<boolean>(KEYS.ADMIN_SESSION, false);
-  }
-
-  adminLogin(email: string, pass: string): boolean {
-    const cleanEmail = (email || '').trim().toLowerCase();
-    const cleanPass = (pass || '').trim();
-
-    // Check custom credentials first
-    const custom = this.getAdminCredentials();
-    if (cleanEmail === custom.email.toLowerCase() && cleanPass === custom.pass) {
-      setStorage(KEYS.ADMIN_SESSION, true);
-      return true;
-    }
-
-    const isEmailValid =
-      cleanEmail === 'admin@cpfurniture.com' ||
-      cleanEmail === 'admin' ||
-      cleanEmail === 'admin@cp.com' ||
-      cleanEmail.includes('admin');
-
-    const isPassValid =
-      cleanPass === 'admin123' ||
-      cleanPass.toLowerCase() === 'admin' ||
-      cleanPass.toLowerCase() === 'admin123' ||
-      cleanPass === 'password123' ||
-      cleanPass === 'admin@123' ||
-      cleanPass === '123456';
-
-    if (isEmailValid && isPassValid) {
-      setStorage(KEYS.ADMIN_SESSION, true);
-      return true;
-    }
-    return false;
   }
 
   adminLogout(): void {

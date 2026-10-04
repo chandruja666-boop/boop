@@ -39,7 +39,7 @@ const otpStore = new Map<string, { codeHash: string; expiresAt: number; attempts
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
 const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '';
 const paymentMode = process.env.PAYMENT_MODE || 'disabled';
-const adminEmail = process.env.ADMIN_EMAIL || 'chandruja666@gmail.com';
+const adminEmail = process.env.ADMIN_EMAIL?.trim() || '';
 const adminPassword = process.env.ADMIN_PASSWORD || '';
 const adminSessions = new Map<string, { user: { name: string; email: string; role: string }; expiresAt: number }>();
 
@@ -527,15 +527,15 @@ app.post('/api/auth/otp/verify', (req, res) => {
 });
 
 app.post('/api/auth/admin/login', (req, res) => {
-    if (!adminPassword) {
-        return res.status(503).json({ success: false, message: 'ADMIN_PASSWORD is not configured on the backend.' });
+    if (!adminEmail || !adminPassword) {
+        return res.status(503).json({ success: false, message: 'Admin credentials are not configured on the backend.' });
     }
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
     if (!email || email.trim().toLowerCase() !== adminEmail.toLowerCase() || password !== adminPassword) {
         return res.status(401).json({ success: false, message: 'Invalid admin credentials.' });
     }
-    const user = { name: 'Chief Merchandiser', email: adminEmail, role: 'Super Admin' };
+    const user = { name: 'Chief Merchandiser', email: '', role: 'Super Admin' };
     const token = crypto.randomBytes(32).toString('hex');
     adminSessions.set(token, { user, expiresAt: Date.now() + 8 * 60 * 60 * 1000 });
     res.json({ success: true, user, token });

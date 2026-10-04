@@ -121,7 +121,6 @@ export const AdminView: React.FC = () => {
   // Admin login states
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
-  const [showAdminPassword, setShowAdminPassword] = useState(false);
 
   // Active admin tab
   const [activeTab, setActiveTab] = useState<
@@ -323,13 +322,6 @@ export const AdminView: React.FC = () => {
   const [srVirtualTourUrl, setSrVirtualTourUrl] = useState('');
 
   // Security management states
-  const [secNewUserId, setSecNewUserId] = useState(storage.getAdminCredentials().email);
-  const [secNewPassword, setSecNewPassword] = useState('');
-  const [secConfirmPassword, setSecConfirmPassword] = useState('');
-  const [secVerifyCurrentPassword, setSecVerifyCurrentPassword] = useState('');
-  const [secShowNewPassword, setSecShowNewPassword] = useState(false);
-  const [secShowConfirmPassword, setSecShowConfirmPassword] = useState(false);
-  const [secShowVerifyPassword, setSecShowVerifyPassword] = useState(false);
   const [securityLogs, setSecurityLogs] = useState<Array<{ action: string; ip: string; date: string; success: boolean }>>([
     { action: 'Dashboard Login Success', ip: '192.168.1.14', date: '2026-09-13 14:05', success: true },
     { action: 'Inventory Export Generated', ip: '192.168.1.14', date: '2026-09-13 15:20', success: true },
@@ -344,8 +336,12 @@ export const AdminView: React.FC = () => {
     e.preventDefault();
     const ok = await loginAdmin(adminEmail, adminPassword);
     if (ok) {
+      setAdminEmail('');
+      setAdminPassword('');
       showToast('Admin access authorized. Welcome back!', 'success');
     } else {
+      setAdminEmail('');
+      setAdminPassword('');
       showToast('Invalid credentials. Please verify your email and password.', 'error');
     }
   };
@@ -398,16 +394,19 @@ export const AdminView: React.FC = () => {
               </p>
             </div>
 
-            <form onSubmit={handleAdminLogin} className="space-y-4 text-xs">
+            <form onSubmit={handleAdminLogin} autoComplete="off" className="space-y-4 text-xs">
               <div>
-                <label className="font-bold text-stone-300 block mb-1">Admin Email</label>
+                <label className="font-bold text-stone-300 block mb-1">Admin Login ID</label>
                 <input
                   id="admin-login-email"
-                  type="text"
+                  type="password"
+                  inputMode="email"
                   required
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="admin@cpfurniture.com"
+                  autoComplete="off"
+                  name="admin-login-identifier"
+                  placeholder="Enter admin login ID"
                   className="w-full p-2.5 bg-stone-800 border border-stone-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -417,19 +416,14 @@ export const AdminView: React.FC = () => {
                 <div className="relative">
                   <input
                     id="admin-login-password"
-                    type={showAdminPassword ? 'text' : 'password'}
+                    type="password"
                     required
                     value={adminPassword}
                     onChange={(e) => setAdminPassword(e.target.value)}
+                    autoComplete="new-password"
+                    name="admin-login-secret"
                     className="w-full p-2.5 bg-stone-800 border border-stone-700 rounded-xl text-white focus:outline-none focus:border-amber-500 pr-10"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowAdminPassword(!showAdminPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200"
-                  >
-                    {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
                 </div>
               </div>
 
@@ -1182,7 +1176,7 @@ export const AdminView: React.FC = () => {
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-stone-200 truncate">{adminUser.name}</p>
-                <p className="text-[10px] text-stone-500 truncate">{adminUser.email}</p>
+                <p className="text-[10px] text-stone-500 truncate">{adminUser.role}</p>
               </div>
             </div>
             <button
@@ -1492,7 +1486,6 @@ export const AdminView: React.FC = () => {
                                 <Clock className="w-3 h-3 text-stone-600" />
                                 <span>{log.date}</span>
                                 <span>&bull;</span>
-                                <span>By: {log.adminEmail}</span>
                               </div>
                             </div>
                           </div>
@@ -4751,8 +4744,8 @@ export const AdminView: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-stone-400">Current Login ID</span>
-                        <span className="text-stone-300 font-mono font-bold truncate max-w-[150px]" title={storage.getAdminCredentials().email}>{storage.getAdminCredentials().email}</span>
+                        <span className="text-stone-400">Admin Credentials</span>
+                        <span className="text-emerald-400 font-bold">Private</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-stone-400">Auth Token Class</span>
@@ -4765,8 +4758,8 @@ export const AdminView: React.FC = () => {
                       <ul className="space-y-1.5 text-stone-400 list-disc list-inside text-[11px]">
                         <li>Avoid using generic terms such as "admin" or "password".</li>
                         <li>Utilize mixed casing, numbers, and symbols for credentials.</li>
-                        <li>Change backoffice access credentials at least every 90 days.</li>
-                        <li>Always verify current credentials before authorizing changes.</li>
+                        <li>Credentials are stored only in the backend environment.</li>
+                        <li>Never share passwords or service-account keys.</li>
                       </ul>
                     </div>
                   </div>
@@ -4794,177 +4787,14 @@ export const AdminView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Right Column - Update Form */}
-                <div className="lg:col-span-8 bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl space-y-6">
-                  <div>
-                    <h3 className="font-bold text-lg font-serif-luxury text-white">Update Administrator Access Credentials</h3>
-                    <p className="text-xs text-stone-400 mt-1">
-                      Securely modify the email/username and secret password for the CP Furniture Backoffice dashboard. All updates require confirmation of your active secret password.
-                    </p>
-                  </div>
-
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-
-                    // Validation
-                    const activeCreds = storage.getAdminCredentials();
-                    if (secVerifyCurrentPassword !== activeCreds.pass) {
-                      showToast('Verification failed: Current password is incorrect.', 'error');
-                      return;
-                    }
-
-                    if (!secNewUserId.trim()) {
-                      showToast('Invalid Login ID: Username/Email cannot be blank.', 'error');
-                      return;
-                    }
-
-                    if (secNewPassword) {
-                      if (secNewPassword.length < 5) {
-                        showToast('Weak Password: New password must be at least 5 characters.', 'error');
-                        return;
-                      }
-                      if (secNewPassword !== secConfirmPassword) {
-                        showToast('Mismatch: New passwords do not match.', 'error');
-                        return;
-                      }
-                    }
-
-                    // Apply changes
-                    const finalPass = secNewPassword || activeCreds.pass;
-                    storage.saveAdminCredentials(secNewUserId, finalPass);
-
-                    // Add security log
-                    const newLog = {
-                      action: 'Credentials Updated Successfully',
-                      ip: '192.168.1.14',
-                      date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-                      success: true
-                    };
-                    setSecurityLogs(prev => [newLog, ...prev]);
-
-                    // Clear verification inputs
-                    setSecNewPassword('');
-                    setSecConfirmPassword('');
-                    setSecVerifyCurrentPassword('');
-
-                    // Show toast & refresh
-                    showToast('Backoffice Security Credentials successfully updated!', 'success');
-                  }} className="space-y-5 text-xs">
-
-                    {/* ID Field */}
-                    <div>
-                      <label className="font-bold text-stone-300 block mb-1 text-left">New Admin User ID (Email or Username) *</label>
-                      <p className="text-[10px] text-stone-500 mb-2 text-left">Used for logging into the dashboard. Defaults to admin@cpfurniture.com.</p>
-                      <input
-                        type="text"
-                        required
-                        value={secNewUserId}
-                        onChange={(e) => setSecNewUserId(e.target.value)}
-                        placeholder="admin@cpfurniture.com"
-                        className="w-full p-3 bg-stone-950 border border-stone-800 rounded-xl text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-amber-500 font-semibold"
-                      />
-                    </div>
-
-                    <div className="border-t border-stone-800/80 my-5 pt-5 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="text-left">
-                          <h4 className="font-bold text-stone-300">Change Admin Password</h4>
-                          <p className="text-[10px] text-stone-500">Leave fields blank if you do not want to alter the current password.</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-                            const generated = `CP-Luxury-${randomSuffix}`;
-                            setSecNewPassword(generated);
-                            setSecConfirmPassword(generated);
-                            showToast(`Secure password generated: ${generated}. Write this down safely!`, 'info');
-                          }}
-                          className="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-bold rounded-lg border border-amber-500/20 transition-colors cursor-pointer text-[10px] flex items-center gap-1 shrink-0"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          <span>Auto Generate Secure Password</span>
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="text-left">
-                          <label className="font-bold text-stone-300 block mb-1">New Password</label>
-                          <div className="relative">
-                            <input
-                              type={secShowNewPassword ? 'text' : 'password'}
-                              value={secNewPassword}
-                              onChange={(e) => setSecNewPassword(e.target.value)}
-                              placeholder="••••••••"
-                              className="w-full p-3 bg-stone-950 border border-stone-800 rounded-xl text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-amber-500 pr-10"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setSecShowNewPassword(!secShowNewPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300"
-                            >
-                              {secShowNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="text-left">
-                          <label className="font-bold text-stone-300 block mb-1">Confirm New Password</label>
-                          <div className="relative">
-                            <input
-                              type={secShowConfirmPassword ? 'text' : 'password'}
-                              value={secConfirmPassword}
-                              onChange={(e) => setSecConfirmPassword(e.target.value)}
-                              placeholder="••••••••"
-                              className="w-full p-3 bg-stone-950 border border-stone-800 rounded-xl text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-amber-500 pr-10"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setSecShowConfirmPassword(!secShowConfirmPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300"
-                            >
-                              {secShowConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Verification password (always required to save) */}
-                    <div className="border-t border-stone-800/80 my-5 pt-5 bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10 space-y-3 text-left">
-                      <div>
-                        <label className="font-bold text-amber-400 block mb-1">Current Secret Password Verification *</label>
-                        <p className="text-[10px] text-stone-400 mb-2">Required step: provide your current backoffice login password (e.g. admin123) to authorize changes.</p>
-                        <div className="relative">
-                          <input
-                            type={secShowVerifyPassword ? 'text' : 'password'}
-                            required
-                            value={secVerifyCurrentPassword}
-                            onChange={(e) => setSecVerifyCurrentPassword(e.target.value)}
-                            placeholder="Verify with current password"
-                            className="w-full p-3 bg-stone-950 border border-amber-500/20 rounded-xl text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-amber-500 pr-10 font-semibold"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setSecShowVerifyPassword(!secShowVerifyPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300"
-                          >
-                            {secShowVerifyPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 text-left">
-                      <button
-                        type="submit"
-                        className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold rounded-xl transition-all shadow-lg hover:shadow-amber-500/10 cursor-pointer flex items-center gap-2"
-                      >
-                        <ShieldCheck className="w-4 h-4 font-bold" />
-                        <span>Enforce Security Updates</span>
-                      </button>
-                    </div>
-                  </form>
+                <div className="lg:col-span-8 bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl space-y-4">
+                  <h3 className="font-bold text-lg font-serif-luxury text-white">Administrator Credentials</h3>
+                  <p className="text-sm text-stone-300">
+                    Admin email and password are private and are not displayed or stored in this browser.
+                  </p>
+                  <p className="text-xs text-stone-400">
+                    To change them, update the ADMIN_EMAIL and ADMIN_PASSWORD environment variables in the backend hosting dashboard, then restart the service.
+                  </p>
                 </div>
 
                 {/* Purchasing Portal Credentials Section */}
@@ -5000,11 +4830,11 @@ export const AdminView: React.FC = () => {
                       <div>
                         <label className="font-bold text-stone-300 block mb-1">Purchasing Password</label>
                         <input
-                          type="text"
+                          type="password"
                           required
                           value={purchPassword}
                           onChange={(e) => setPurchPassword(e.target.value)}
-                          placeholder="purchasing123"
+                          placeholder="Enter purchasing password"
                           className="w-full p-3 bg-stone-950 border border-stone-800 rounded-xl text-stone-100 focus:outline-none focus:border-amber-500 font-semibold text-xs"
                         />
                       </div>
