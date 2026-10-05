@@ -34,6 +34,7 @@ fs.mkdirSync(dataDirectory, { recursive: true });
 const databasePath = path.join(dataDirectory, 'server-data.json');
 let firebaseDatabase: FirebaseDatabase | null = null;
 let firebaseWriteQueue: Promise<void> = Promise.resolve();
+const databaseBaselines = new WeakMap<Database, Database>();
 const realtimeClients = new Set<express.Response>();
 const otpStore = new Map<string, { codeHash: string; expiresAt: number; attempts: number; sentAt?: number }>();
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
@@ -89,11 +90,14 @@ function readDatabase(): Database {
     if (!fs.existsSync(databasePath)) {
         const initial: Database = { products: [], orders: INITIAL_ORDERS, categories: INITIAL_CATEGORIES, coupons: INITIAL_COUPONS };
         fs.writeFileSync(databasePath, JSON.stringify(initial, null, 2), 'utf8');
+        databaseBaselines.set(initial, JSON.parse(JSON.stringify(initial)) as Database);
         return initial;
     }
 
     try {
-        return JSON.parse(fs.readFileSync(databasePath, 'utf8')) as Database;
+        const database = JSON.parse(fs.readFileSync(databasePath, 'utf8')) as Database;
+        databaseBaselines.set(database, JSON.parse(JSON.stringify(database)) as Database);
+        return database;
     } catch (error) {
         console.error('[database] Failed to read/parse local database snapshot.', {
             path: databasePath,
@@ -103,17 +107,47 @@ function readDatabase(): Database {
     }
 }
 
+function mergeProductChanges(
+    currentProductsValue: unknown,
+    baseProducts: Product[],
+    desiredProducts: Product[]
+): Product[] {
+    const currentProducts = Array.isArray(currentProductsValue) ? currentProductsValue as Product[] : [];
+    const baseById = new Map(baseProducts.map((product) => [product.id, product]));
+    const desiredById = new Map(desiredProducts.map((product) => [product.id, product]));
+    const changedProducts = new Map(
+        desiredProducts
+            .filter((product) => JSON.stringify(baseById.get(product.id)) !== JSON.stringify(product))
+            .map((product) => [product.id, product])
+    );
+    const deletedProductIds = new Set(baseProducts
+        .filter((product) => !desiredById.has(product.id))
+        .map((product) => product.id));
+    const merged = currentProducts
+        .filter((product) => !deletedProductIds.has(product.id))
+        .map((product) => changedProducts.get(product.id) || product);
+    const currentIds = new Set(currentProducts.map((product) => product.id));
+    desiredProducts.forEach((product) => {
+        if (!currentIds.has(product.id) && changedProducts.has(product.id)) merged.unshift(product);
+    });
+    return merged;
+}
+
 function writeDatabase(database: Database): Promise<void> {
     const snapshot = JSON.parse(JSON.stringify(database)) as Database;
-    const writeLocalSnapshot = () => {
+    const baseline = databaseBaselines.get(database);
+    const changedKeys = baseline
+        ? (Object.keys(snapshot) as Array<keyof Database>).filter((key) => JSON.stringify(snapshot[key]) !== JSON.stringify(baseline[key]))
+        : Object.keys(snapshot) as Array<keyof Database>;
+    const writeLocalSnapshot = (state: Database) => {
         const temporaryPath = `${databasePath}.tmp`;
-        fs.writeFileSync(temporaryPath, JSON.stringify(snapshot, null, 2), 'utf8');
+        fs.writeFileSync(temporaryPath, JSON.stringify(state, null, 2), 'utf8');
         fs.renameSync(temporaryPath, databasePath);
     };
 
     if (!firebaseDatabase) {
         try {
-            writeLocalSnapshot();
+            writeLocalSnapshot(snapshot);
             return Promise.resolve();
         } catch (error) {
             console.error('[database] Failed to write local JSON snapshot.', {
@@ -126,21 +160,55 @@ function writeDatabase(database: Database): Promise<void> {
 
     firebaseWriteQueue = firebaseWriteQueue.catch(() => undefined).then(async () => {
         try {
-            await firebaseDatabase?.ref('cpFurniture/state').set(snapshot);
+            const stateReference = firebaseDatabase?.ref('cpFurniture/state');
+            if (!stateReference) throw new Error('Firebase database is not initialized.');
+            const result = await stateReference.transaction((currentValue) => {
+                const currentState = currentValue && typeof currentValue === 'object'
+                    ? currentValue as Record<string, unknown>
+                    : {};
+                const nextState = { ...currentState };
+                changedKeys.forEach((key) => {
+                    if (key === 'products' && baseline) {
+                        nextState.products = mergeProductChanges(
+                            currentState.products,
+                            baseline.products,
+                            snapshot.products
+                        );
+                    } else if (Object.prototype.hasOwnProperty.call(snapshot, key)) {
+                        nextState[key] = snapshot[key];
+                    } else {
+                        delete nextState[key];
+                    }
+                });
+                return nextState;
+            });
+            if (!result.committed || !result.snapshot.exists()) {
+                throw new Error('Firebase database transaction was not committed.');
+            }
+            const committedState = result.snapshot.val() as Database;
             console.info('[database] Firebase state write succeeded.');
+            writeLocalSnapshot(committedState);
         } catch (error) {
             console.error('[database] Firebase state write failed.', { error: describeError(error) });
             throw error;
         }
-        writeLocalSnapshot();
     });
     return firebaseWriteQueue;
+}
+
+async function getProductsFromStore(): Promise<Product[]> {
+    if (!firebaseDatabase) return readDatabase().products;
+    const snapshot = await firebaseDatabase.ref('cpFurniture/state/products').get();
+    if (!snapshot.exists()) return [];
+    const products = snapshot.val() as unknown;
+    if (!Array.isArray(products)) throw new Error('Firebase products state is not an array.');
+    return products as Product[];
 }
 
 function asyncRoute(handler: (req: express.Request, res: express.Response) => Promise<void>): express.RequestHandler {
     return (req, res, next) => {
         void handler(req, res).catch((error: unknown) => {
-            console.error('API request failed:', error);
+            console.error('[api] Request failed.', { path: req.path, error: describeError(error) });
             if (!res.headersSent) res.status(503).json({ message: 'Shared database write failed. Please retry.' });
             else next(error);
         });
@@ -354,9 +422,9 @@ app.get('/api/events', (req, res) => {
     req.on('close', () => realtimeClients.delete(res));
 });
 
-app.get('/api/products', (_req, res) => {
-    res.json(readDatabase().products);
-});
+app.get('/api/products', asyncRoute(async (_req, res) => {
+    res.json(await getProductsFromStore());
+}));
 
 app.get('/api/catalog', (_req, res) => {
     const database = readDatabase();
@@ -435,7 +503,8 @@ app.put('/api/products/:id', requireAdmin, asyncRoute(async (req, res) => {
     else database.products.unshift(product);
 
     await writeDatabase(database);
-    publish('products.updated', database.products);
+    const products = await getProductsFromStore();
+    publish('products.updated', products);
     res.json(product);
 }));
 
@@ -443,7 +512,7 @@ app.delete('/api/products/:id', requireAdmin, asyncRoute(async (req, res) => {
     const database = readDatabase();
     database.products = database.products.filter((product) => product.id !== req.params.id);
     await writeDatabase(database);
-    publish('products.updated', database.products);
+    publish('products.updated', await getProductsFromStore());
     res.json({ success: true });
 }));
 
