@@ -2,26 +2,19 @@ import React, { useState } from 'react';
 import {
   ShieldCheck,
   Truck,
-  CreditCard,
-  QrCode,
-  Building2,
-  Banknote,
   CheckCircle2,
   ArrowRight,
   MapPin,
   Clock,
   Lock,
-  ChevronRight,
   FileText,
   Printer,
-  ExternalLink,
   Compass,
   Loader2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Address, PaymentMethod, Order, RAZORPAY_CONFIG } from '../../types';
 import { RazorpayPaymentModal } from './RazorpayStandardCheckout.tsx';
-import { UPIQRCodeDisplay } from './UPIQRCodeDisplay';
 
 export const CheckoutView: React.FC = () => {
   const {
@@ -69,13 +62,6 @@ export const CheckoutView: React.FC = () => {
 
   // Payment Method
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | string>('Razorpay');
-  const [cardName, setCardName] = useState('Rohan Verma');
-  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 8910');
-  const [cardExpiry, setCardExpiry] = useState('08/29');
-  const [cardCvv, setCardCvv] = useState('742');
-  const [upiId, setUpiId] = useState('rohan@okaxis');
-  const [selectedBank, setSelectedBank] = useState('HDFC Bank');
-  const [selectedEmiTenure, setSelectedEmiTenure] = useState('6');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -241,7 +227,8 @@ export const CheckoutView: React.FC = () => {
       }
     }
 
-    if (paymentMethod === 'Razorpay' || paymentMethod.includes('Razorpay') || paymentMethod === 'upi' || paymentMethod === 'card' || paymentMethod === 'netbanking') {
+    if (paymentMethod === 'Razorpay') {
+      setIsSubmitting(true);
       setShowRazorpayModal(true);
       return;
     }
@@ -267,27 +254,23 @@ export const CheckoutView: React.FC = () => {
     bankSettlement: string;
   }) => {
     setShowRazorpayModal(false);
-    setIsSubmitting(true);
-
-    setTimeout(() => {
-      const newOrder = placeOrder(
-        activeAddress,
-        'Razorpay (razorpay.me/@anandhanchandru)',
-        deliveryNote,
-        {
-          razorpayPaymentId: paymentDetails.paymentId,
-          razorpayHandle: paymentDetails.handle,
-          bankSettlementStatus: 'Direct Settled to Bank',
-          paymentReference: paymentDetails.orderId
-        }
-      );
-      setIsSubmitting(false);
-
-      if (newOrder) {
-        setOrderPlaced(newOrder);
-        showToast(`Payment of ₹${cartTotal.total.toLocaleString()} confirmed via Razorpay (@anandhanchandru)!`, 'success');
+    const newOrder = placeOrder(
+      activeAddress,
+      'Razorpay (razorpay.me/@anandhanchandru)',
+      deliveryNote,
+      {
+        razorpayPaymentId: paymentDetails.paymentId,
+        razorpayHandle: paymentDetails.handle,
+        bankSettlementStatus: 'Direct Settled to Bank',
+        paymentReference: paymentDetails.orderId
       }
-    }, 600);
+    );
+    setIsSubmitting(false);
+
+    if (newOrder) {
+      setOrderPlaced(newOrder);
+      showToast(`Payment of ₹${cartTotal.total.toLocaleString()} confirmed via Razorpay.`, 'success');
+    }
   };
 
   // SUCCESS CONFIRMATION SCREEN
@@ -800,286 +783,18 @@ export const CheckoutView: React.FC = () => {
               </span>
             </div>
 
-            {/* Featured Razorpay Merchant Gateway Option Banner */}
-            <div
-              onClick={() => setPaymentMethod('Razorpay')}
-              className={`p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${paymentMethod === 'Razorpay' || paymentMethod.includes('Razorpay')
-                ? 'border-amber-600 bg-stone-950 text-white shadow-xl ring-2 ring-amber-500/20'
-                : 'border-stone-200 bg-stone-50 text-stone-900 hover:border-amber-700'
-                }`}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-start gap-3.5">
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 ${paymentMethod === 'Razorpay' || paymentMethod.includes('Razorpay')
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : 'bg-stone-900 text-amber-400'
-                    }`}>
-                    ₹
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm tracking-wide">Razorpay Instant Gateway</h4>
-                      <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
-                        RECOMMENDED
-                      </span>
-                    </div>
-                    <p className={`text-xs mt-0.5 ${paymentMethod === 'Razorpay' || paymentMethod.includes('Razorpay') ? 'text-amber-200/90 font-mono' : 'text-stone-600 font-mono'
-                      }`}>
-                      Account: {RAZORPAY_CONFIG.merchantHandle} &bull; {RAZORPAY_CONFIG.merchantName}
-                    </p>
-                    <p className={`text-[11px] mt-1 ${paymentMethod === 'Razorpay' || paymentMethod.includes('Razorpay') ? 'text-stone-300' : 'text-stone-500'
-                      }`}>
-                      Instant UPI QR &bull; GPay / PhonePe / Paytm &bull; Credit/Debit Cards &bull; NetBanking &bull; Direct Bank Settlement
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 self-end sm:self-center">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPaymentMethod('Razorpay');
-                      setShowRazorpayModal(true);
-                    }}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>Pay with Razorpay</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-stone-900">Secure online payment with Razorpay</p>
+                <p className="text-xs text-stone-500">UPI, cards, netbanking and wallets are available in checkout.</p>
               </div>
-            </div>
-
-            {/* Payment Method Selector Pills */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs font-bold">
               <button
                 type="button"
-                onClick={() => setPaymentMethod('Razorpay')}
-                className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${paymentMethod === 'Razorpay'
-                  ? 'border-amber-900 bg-amber-50 text-amber-950 ring-1 ring-amber-900'
-                  : 'border-stone-200 text-stone-600 hover:bg-stone-50'
-                  }`}
+                onClick={() => setPaymentMethod(paymentMethod === 'Razorpay' ? 'cod' : 'Razorpay')}
+                className="text-xs font-semibold text-amber-900 underline underline-offset-2"
               >
-                <ShieldCheck className="w-4 h-4 text-amber-700" />
-                <span>Razorpay</span>
+                {paymentMethod === 'Razorpay' ? 'Choose pay on delivery' : 'Choose Razorpay'}
               </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('card')}
-                className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${paymentMethod === 'card'
-                  ? 'border-amber-900 bg-amber-50 text-amber-950 ring-1 ring-amber-900'
-                  : 'border-stone-200 text-stone-600 hover:bg-stone-50'
-                  }`}
-              >
-                <CreditCard className="w-4 h-4" />
-                <span>Card</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('upi')}
-                className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${paymentMethod === 'upi'
-                  ? 'border-amber-900 bg-amber-50 text-amber-950 ring-1 ring-amber-900'
-                  : 'border-stone-200 text-stone-600 hover:bg-stone-50'
-                  }`}
-              >
-                <QrCode className="w-4 h-4" />
-                <span>UPI / QR</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('netbanking')}
-                className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${paymentMethod === 'netbanking'
-                  ? 'border-amber-900 bg-amber-50 text-amber-950 ring-1 ring-amber-900'
-                  : 'border-stone-200 text-stone-600 hover:bg-stone-50'
-                  }`}
-              >
-                <Building2 className="w-4 h-4" />
-                <span>Net Banking</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('cod')}
-                className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${paymentMethod === 'cod'
-                  ? 'border-amber-900 bg-amber-50 text-amber-950 ring-1 ring-amber-900'
-                  : 'border-stone-200 text-stone-600 hover:bg-stone-50'
-                  }`}
-              >
-                <Truck className="w-4 h-4" />
-                <span>Pay on Delivery</span>
-              </button>
-            </div>
-
-            {/* Payment Method Details Form */}
-            <div className="p-5 bg-stone-50 rounded-2xl border border-stone-200 text-xs">
-              {(paymentMethod === 'Razorpay' || paymentMethod.includes('Razorpay')) && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-stone-700">
-                    <span className="font-bold">Merchant Beneficiary:</span>
-                    <span className="font-mono font-semibold">{RAZORPAY_CONFIG.merchantName}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-stone-700">
-                    <span className="font-bold">Direct Payment Handle:</span>
-                    <span className="font-mono text-amber-900 font-bold">{RAZORPAY_CONFIG.merchantHandle}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-stone-700">
-                    <span className="font-bold">Settlement Method:</span>
-                    <span className="text-emerald-700 font-semibold">{RAZORPAY_CONFIG.settlementType}</span>
-                  </div>
-                  <p className="text-stone-500 text-[11px] pt-2 border-t border-stone-200">
-                    Clicking "Place Furniture Order" will launch the Razorpay Gateway sheet with instant UPI QR, 1-click app links, and direct bank routing.
-                  </p>
-                </div>
-              )}
-              {paymentMethod === 'card' && (
-                <div className="space-y-3 max-w-md">
-                  <div>
-                    <label className="font-bold text-stone-700 block mb-1">Cardholder Name</label>
-                    <input
-                      type="text"
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      className="w-full p-2.5 bg-white border border-stone-300 rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-stone-700 block mb-1">Card Number</label>
-                    <input
-                      type="text"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-mono"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-stone-700 block mb-1">Expiry Date</label>
-                      <input
-                        type="text"
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        placeholder="MM/YY"
-                        className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-bold text-stone-700 block mb-1">CVV</label>
-                      <input
-                        type="password"
-                        maxLength={3}
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value)}
-                        className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === 'upi' && (
-                <div className="space-y-5">
-                  <UPIQRCodeDisplay
-                    amount={cartTotal.total}
-                    customerName={name || customer?.name}
-                    customerPhone={phone || customer?.phone}
-                    shippingAddress={activeAddress}
-                  />
-
-                  {/* Manual UPI ID Input Option */}
-                  <div className="p-4 bg-white rounded-2xl border border-stone-200 space-y-3">
-                    <p className="font-bold text-stone-800 text-xs">Or Enter Your UPI ID / VPA for Direct Collect Request:</p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        type="text"
-                        value={upiId}
-                        onChange={(e) => setUpiId(e.target.value)}
-                        placeholder="e.g. yourname@okhdfcbank"
-                        className="flex-1 p-2.5 bg-stone-50 border border-stone-300 rounded-xl font-mono text-xs focus:outline-none focus:border-amber-900"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          showToast(`Collect request sent to ${upiId} for ₹${cartTotal.total.toLocaleString()}`, 'success');
-                          setShowRazorpayModal(true);
-                        }}
-                        className="px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shrink-0"
-                      >
-                        Request Collect &rarr;
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {['@okhdfcbank', '@okaxis', '@paytm', '@ybl', '@oksbi', '@icici'].map((h) => (
-                        <button
-                          key={h}
-                          type="button"
-                          onClick={() => setUpiId((prev) => (prev ? prev.split('@')[0] : 'name') + h)}
-                          className="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 rounded text-[10px] font-mono text-stone-700 cursor-pointer transition-colors"
-                        >
-                          {h}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === 'netbanking' && (
-                <div className="space-y-3 max-w-md">
-                  <label className="font-bold text-stone-700 block mb-1">Select Bank</label>
-                  <select
-                    value={selectedBank}
-                    onChange={(e) => setSelectedBank(e.target.value)}
-                    className="w-full p-2.5 bg-white border border-stone-300 rounded-xl"
-                  >
-                    <option>HDFC Bank</option>
-                    <option>ICICI Bank</option>
-                    <option>State Bank of India</option>
-                    <option>Axis Bank</option>
-                    <option>Kotak Mahindra Bank</option>
-                  </select>
-                </div>
-              )}
-
-              {paymentMethod === 'emi' && (
-                <div className="space-y-3">
-                  <p className="font-bold text-stone-800">Select EMI Tenure:</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {[
-                      { months: '3', rate: '0% No-Cost', monthly: Math.round(cartTotal.total / 3) },
-                      { months: '6', rate: '0% No-Cost', monthly: Math.round(cartTotal.total / 6) },
-                      { months: '12', rate: '14% Standard', monthly: Math.round((cartTotal.total * 1.09) / 12) }
-                    ].map((plan) => (
-                      <div
-                        key={plan.months}
-                        onClick={() => setSelectedEmiTenure(plan.months)}
-                        className={`p-3 rounded-xl border cursor-pointer ${selectedEmiTenure === plan.months
-                          ? 'border-amber-900 bg-white shadow-sm ring-1 ring-amber-900'
-                          : 'border-stone-200 bg-white'
-                          }`}
-                      >
-                        <span className="font-bold block">{plan.months} Months</span>
-                        <span className="text-[11px] text-amber-800 font-medium block">{plan.rate}</span>
-                        <span className="text-sm font-bold text-stone-900 mt-1 block">
-                          ₹{plan.monthly.toLocaleString()} /mo
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === 'cod' && (
-                <div className="space-y-2 text-stone-600">
-                  <p className="font-bold text-stone-900">Pay on Delivery Available</p>
-                  <p>
-                    Pay via cash, UPI, or card machine to our showroom technician once your furniture is unboxed, placed, and fully assembled to your satisfaction.
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -1170,7 +885,7 @@ export const CheckoutView: React.FC = () => {
               className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white text-sm font-bold rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
-                <span>Processing Order with Razorpay...</span>
+                <span>Placing your order...</span>
               ) : (
                 <>
                   <span>
@@ -1184,7 +899,7 @@ export const CheckoutView: React.FC = () => {
             </button>
 
             <div className="pt-2 text-[11px] text-stone-400 text-center space-y-1">
-              <p>By clicking "Place Furniture Order", you accept CP Furniture's terms of service and 10-year warranty policy.</p>
+              <p>By continuing, you accept CP Furniture's terms of service and 10-year warranty policy.</p>
             </div>
           </div>
         </div>
@@ -1193,7 +908,11 @@ export const CheckoutView: React.FC = () => {
       {/* Embedded Razorpay Secure Gateway Modal */}
       <RazorpayPaymentModal
         isOpen={showRazorpayModal}
-        onClose={() => setShowRazorpayModal(false)}
+        onClose={() => {
+          setShowRazorpayModal(false);
+          setIsSubmitting(false);
+        }}
+        onError={(message) => showToast(message, 'error')}
         amount={cartTotal.grandTotal}
         items={cartItems.map(({ product, item }) => ({ productId: product.id, quantity: item.quantity }))}
         couponCode={appliedCoupon?.code}

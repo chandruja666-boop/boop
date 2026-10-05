@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { AlertCircle, Building2, CheckCircle2, Loader2, Lock, ShieldCheck, X } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { RAZORPAY_CONFIG } from '../../types';
 import { cloudApi } from '../../services/cloudApi';
 
@@ -34,6 +33,7 @@ declare global {
 interface RazorpayPaymentModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onError: (message: string) => void;
     amount: number;
     items: Array<{ productId: string; quantity: number }>;
     couponCode?: string;
@@ -69,146 +69,96 @@ function loadRazorpayCheckout(): Promise<void> {
     return checkoutScriptPromise;
 }
 
-export const RazorpayPaymentModal: React.FC<RazorpayPaymentModalProps> = ({
-    isOpen,
-    onClose,
-    amount,
-    items,
-    couponCode,
-    customerName,
-    customerPhone,
-    customerEmail,
-    onPaymentSuccess
-}) => {
-    const [gatewayOrder, setGatewayOrder] = useState<{ id: string; amount: number; currency: string; testMode?: boolean; keyId?: string } | null>(null);
-    const [paymentError, setPaymentError] = useState('');
-    const [isProcessing, setIsProcessing] = useState(false);
+export const RazorpayPaymentModal: React.FC<RazorpayPaymentModalProps> = (props) => {
+    const latestProps = useRef(props);
+    latestProps.current = props;
 
     useEffect(() => {
-        if (!isOpen) return;
-        setPaymentError('');
-        setGatewayOrder(null);
-        setIsProcessing(false);
-        cloudApi.createRazorpayOrder(amount, 'INR', `cpfurniture-${Date.now()}`, items, couponCode)
-            .then(setGatewayOrder)
-            .catch((error: unknown) => setPaymentError(error instanceof Error ? error.message : 'Unable to initialize Razorpay securely.'));
-    }, [amount, couponCode, isOpen, items]);
+        if (!props.isOpen) return;
+        let cancelled = false;
 
-    if (!isOpen) return null;
+        const startCheckout = async () => {
+            const current = latestProps.current;
+            try {
+                const order = await cloudApi.createRazorpayOrder(
+                    current.amount,
+                    'INR',
+                    `cpfurniture-${Date.now()}`,
+                    current.items,
+                    current.couponCode
+                );
+                if (cancelled) return;
 
-    const completeVerifiedPayment = async (response: RazorpayResponse) => {
-        if (!gatewayOrder || response.razorpay_order_id !== gatewayOrder.id) {
-            setPaymentError('The payment response does not match this checkout order.');
-            setIsProcessing(false);
-            return;
-        }
-        try {
-            const verification = await cloudApi.verifyRazorpayPayment(
-                response.razorpay_order_id,
-                response.razorpay_payment_id,
-                response.razorpay_signature,
-                amount
-            );
-            if (!verification.verified) throw new Error('Razorpay payment verification failed.');
-            setIsProcessing(false);
-            onPaymentSuccess({
-                paymentId: response.razorpay_payment_id,
-                orderId: response.razorpay_order_id,
-                handle: RAZORPAY_CONFIG.merchantHandle,
-                method: 'Razorpay Standard Checkout',
-                bankSettlement: RAZORPAY_CONFIG.settlementType
-            });
-        } catch (error) {
-            setIsProcessing(false);
-            setPaymentError(error instanceof Error ? error.message : 'Payment verification failed.');
-        }
-    };
+                const completePayment = async (response: RazorpayResponse) => {
+                    if (response.razorpay_order_id !== order.id) {
+                        latestProps.current.onError('Payment response does not match this order.');
+                        latestProps.current.onClose();
+                        return;
+                    }
 
-    const handleOpenCheckout = async () => {
-        if (!gatewayOrder) {
-            setPaymentError('Secure payment order is not ready. Please try again.');
-            return;
-        }
+                    try {
+                        const verification = await cloudApi.verifyRazorpayPayment(
+                            response.razorpay_order_id,
+                            response.razorpay_payment_id,
+                            response.razorpay_signature,
+                            current.amount
+                        );
+                        if (!verification.verified) throw new Error('Razorpay payment verification failed.');
+                        latestProps.current.onPaymentSuccess({
+                            paymentId: response.razorpay_payment_id,
+                            orderId: response.razorpay_order_id,
+                            handle: RAZORPAY_CONFIG.merchantHandle,
+                            method: 'Razorpay Standard Checkout',
+                            bankSettlement: RAZORPAY_CONFIG.settlementType
+                        });
+                    } catch (error) {
+                        latestProps.current.onError(error instanceof Error ? error.message : 'Payment verification failed.');
+                        latestProps.current.onClose();
+                    }
+                };
 
-        setIsProcessing(true);
-        if (gatewayOrder.testMode) {
-            await completeVerifiedPayment({
-                razorpay_payment_id: `pay_test_${Date.now()}`,
-                razorpay_order_id: gatewayOrder.id,
-                razorpay_signature: 'test'
-            });
-            return;
-        }
+                if (order.testMode) {
+                    await completePayment({
+                        razorpay_payment_id: `pay_test_${Date.now()}`,
+                        razorpay_order_id: order.id,
+                        razorpay_signature: 'test'
+                    });
+                    return;
+                }
 
-        try {
-            await loadRazorpayCheckout();
-            if (!window.Razorpay || !gatewayOrder.keyId) throw new Error('Razorpay Checkout is unavailable. Check the production key configuration.');
-            const checkout = new window.Razorpay({
-                key: gatewayOrder.keyId,
-                amount: gatewayOrder.amount,
-                currency: gatewayOrder.currency,
-                name: 'CP Furniture',
-                description: 'CP Furniture order',
-                order_id: gatewayOrder.id,
-                prefill: { name: customerName, email: customerEmail, contact: customerPhone },
-                handler: (response) => { void completeVerifiedPayment(response); },
-                modal: { ondismiss: () => setIsProcessing(false) }
-            });
-            checkout.open();
-        } catch (error) {
-            setIsProcessing(false);
-            setPaymentError(error instanceof Error ? error.message : 'Unable to open Razorpay Checkout.');
-        }
-    };
+                await loadRazorpayCheckout();
+                if (cancelled) return;
+                if (!window.Razorpay || !order.keyId) {
+                    throw new Error('Razorpay Checkout is unavailable. Check the production key configuration.');
+                }
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full max-w-md overflow-hidden rounded-2xl border border-amber-500/30 bg-stone-900 text-stone-100 shadow-2xl">
-                <div className="flex items-center justify-between border-b border-stone-800 bg-stone-950 px-5 py-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 text-lg font-bold text-amber-400">₹</div>
-                        <div>
-                            <h2 className="flex items-center gap-2 text-sm font-bold text-white"><ShieldCheck className="h-4 w-4 text-emerald-400" /> Secure Razorpay Checkout</h2>
-                            <p className="text-xs text-stone-400">{RAZORPAY_CONFIG.businessName}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="rounded-lg p-2 text-stone-400 transition-colors hover:bg-stone-800 hover:text-white" aria-label="Close payment dialog">
-                        <X className="h-4 w-4" />
-                    </button>
-                </div>
+                const checkout = new window.Razorpay({
+                    key: order.keyId,
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: 'CP Furniture',
+                    description: 'CP Furniture order',
+                    order_id: order.id,
+                    prefill: {
+                        name: current.customerName,
+                        email: current.customerEmail,
+                        contact: current.customerPhone
+                    },
+                    handler: (response) => { void completePayment(response); },
+                    modal: { ondismiss: () => latestProps.current.onClose() }
+                });
+                checkout.open();
+            } catch (error) {
+                if (!cancelled) {
+                    latestProps.current.onError(error instanceof Error ? error.message : 'Unable to open Razorpay Checkout.');
+                    latestProps.current.onClose();
+                }
+            }
+        };
 
-                <div className="space-y-5 p-5">
-                    <div className="flex items-center justify-between border-b border-stone-800 pb-4">
-                        <span className="text-sm text-stone-400">Order total</span>
-                        <span className="font-mono text-2xl font-bold text-amber-400">₹{amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    </div>
+        void startCheckout();
+        return () => { cancelled = true; };
+    }, [props.isOpen]);
 
-                    <div className="flex gap-3 rounded-xl border border-stone-800 bg-stone-950/70 p-4">
-                        <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                        <p className="text-xs leading-5 text-stone-300">Choose an available payment method in Razorpay Checkout, including UPI apps, cards, netbanking, and wallets.</p>
-                    </div>
-
-                    {gatewayOrder && <p className="break-all font-mono text-[11px] text-stone-500">Order: {gatewayOrder.id}</p>}
-                    {paymentError && (
-                        <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-950/30 p-3 text-xs text-red-200">
-                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                            <span>{paymentError}</span>
-                        </div>
-                    )}
-
-                    <button
-                        onClick={() => void handleOpenCheckout()}
-                        disabled={!gatewayOrder || isProcessing}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3.5 text-sm font-bold text-white transition-colors hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying payment...</> : <><CheckCircle2 className="h-4 w-4" /> Pay securely with Razorpay</>}
-                    </button>
-
-                    <div className="flex items-center justify-center gap-2 text-[11px] text-stone-500">
-                        <Lock className="h-3 w-3 text-emerald-500" /> Payment is verified by the CP Furniture server
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+    return null;
 };
