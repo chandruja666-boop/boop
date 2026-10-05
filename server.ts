@@ -39,17 +39,22 @@ const otpStore = new Map<string, { codeHash: string; expiresAt: number; attempts
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
 const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '';
 const paymentMode = process.env.PAYMENT_MODE || 'disabled';
-const adminEmail = process.env.ADMIN_EMAIL?.trim() || '';
-const adminPassword = process.env.ADMIN_PASSWORD || '';
 const adminSessions = new Map<string, { user: { name: string; email: string; role: string }; expiresAt: number }>();
+
+function getAdminCredentials(): { email: string; password: string } {
+    return {
+        email: process.env.ADMIN_EMAIL?.trim().toLowerCase() || '',
+        password: process.env.ADMIN_PASSWORD ?? ''
+    };
+}
 
 function describeError(error: unknown): { name: string; code?: string | number; message: string } {
     if (error instanceof Error) {
         const firebaseError = error as Error & { code?: string | number };
         let message = error.message;
         const sensitiveValues = [
-            adminEmail,
-            adminPassword,
+            process.env.ADMIN_EMAIL || '',
+            process.env.ADMIN_PASSWORD || '',
             process.env.FIREBASE_DATABASE_URL || '',
             process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '',
             process.env.FAST2SMS_API_KEY || '',
@@ -146,15 +151,16 @@ async function initializePersistentStore(): Promise<void> {
     const serviceAccountSetting = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '';
     const databaseUrl = process.env.FIREBASE_DATABASE_URL || '';
     const firebaseRequired = process.env.FIREBASE_REQUIRED?.trim().toLowerCase() === 'true';
+    const adminCredentials = getAdminCredentials();
     console.info('[database] Starting persistence initialization.', {
         firebaseRequired,
         hasFirebaseDatabaseUrl: Boolean(databaseUrl),
         hasFirebaseServiceAccount: Boolean(serviceAccountSetting),
-        hasAdminEmail: Boolean(adminEmail),
-        hasAdminPassword: Boolean(adminPassword),
+        hasAdminEmail: Boolean(adminCredentials.email),
+        hasAdminPassword: Boolean(adminCredentials.password),
         localSnapshotPath: databasePath
     });
-    if (adminPassword && adminPassword.length < 12) {
+    if (adminCredentials.password && adminCredentials.password.length < 12) {
         console.warn('[auth] ADMIN_PASSWORD is shorter than 12 characters; use a longer, unique secret.');
     }
     if (!serviceAccountSetting || !databaseUrl) {
@@ -600,20 +606,22 @@ app.post('/api/auth/otp/verify', (req, res) => {
 });
 
 app.post('/api/auth/admin/login', (req, res) => {
+    const configuredCredentials = getAdminCredentials();
+    const requestBody = req.body as { email?: unknown; password?: unknown } | undefined;
+    const submittedEmail = typeof requestBody?.email === 'string' ? requestBody.email.trim().toLowerCase() : '';
+    const submittedPassword = typeof requestBody?.password === 'string' ? requestBody.password : '';
     console.info('[auth] Admin login request received.', {
-        emailProvided: typeof req.body.email === 'string' && req.body.email.trim().length > 0,
-        passwordProvided: typeof req.body.password === 'string' && req.body.password.length > 0,
-        adminEmailConfigured: Boolean(adminEmail),
-        adminPasswordConfigured: Boolean(adminPassword)
+        emailProvided: Boolean(submittedEmail),
+        passwordProvided: submittedPassword.length > 0,
+        adminEmailConfigured: Boolean(configuredCredentials.email),
+        adminPasswordConfigured: Boolean(configuredCredentials.password)
     });
-    if (!adminEmail || !adminPassword) {
+    if (!configuredCredentials.email || !configuredCredentials.password) {
         console.error('[auth] Admin login unavailable because backend credentials are not fully configured.');
         return res.status(503).json({ success: false, message: 'Admin credentials are not configured on the backend.' });
     }
-    const email = String(req.body.email || '').trim().toLowerCase();
-    const password = String(req.body.password || '');
-    const emailMatches = Boolean(email) && email === adminEmail.toLowerCase();
-    const passwordMatches = hasMatchingSecret(adminPassword, password);
+    const emailMatches = Boolean(submittedEmail) && submittedEmail === configuredCredentials.email;
+    const passwordMatches = hasMatchingSecret(configuredCredentials.password, submittedPassword);
     if (!emailMatches || !passwordMatches) {
         console.warn('[auth] Admin login rejected.', {
             emailMatches,
