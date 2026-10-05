@@ -12,8 +12,8 @@ import {
   Loader2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { Address, PaymentMethod, Order } from '../../types';
-import { RazorpayPaymentModal } from './RazorpayStandardCheckout.tsx';
+import { Address, Order } from '../../types';
+import { RazorpayCheckoutLauncher } from './RazorpayCheckout.tsx';
 
 export const CheckoutView: React.FC = () => {
   const {
@@ -30,7 +30,7 @@ export const CheckoutView: React.FC = () => {
 
   // If cart is empty and no order placed
   const [orderPlaced, setOrderPlaced] = useState<Order | null>(null);
-  const [showRazorpayModal, setShowRazorpayModal] = useState(false);
+  const [launchRazorpayCheckout, setLaunchRazorpayCheckout] = useState(false);
 
   // Address selection / new address form
   const [selectedAddressId, setSelectedAddressId] = useState<string>(
@@ -58,9 +58,6 @@ export const CheckoutView: React.FC = () => {
   // Delivery slot
   const [deliverySlot, setDeliverySlot] = useState<string>('morning');
   const [deliveryNote, setDeliveryNote] = useState('');
-
-  // Payment Method
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | string>('Razorpay');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -226,30 +223,15 @@ export const CheckoutView: React.FC = () => {
       }
     }
 
-    if (paymentMethod === 'Razorpay') {
-      setIsSubmitting(true);
-      setShowRazorpayModal(true);
-      return;
-    }
-
     setIsSubmitting(true);
-
-    setTimeout(() => {
-      const newOrder = placeOrder(activeAddress, paymentMethod as PaymentMethod, deliveryNote);
-      setIsSubmitting(false);
-
-      if (newOrder) {
-        setOrderPlaced(newOrder);
-        showToast('Your CP Furniture order has been placed successfully!', 'success');
-      }
-    }, 1000);
+    setLaunchRazorpayCheckout(true);
   };
 
   const handleRazorpaySuccess = (paymentDetails: {
     paymentId: string;
     orderId: string;
   }) => {
-    setShowRazorpayModal(false);
+    setLaunchRazorpayCheckout(false);
     const newOrder = placeOrder(
       activeAddress,
       'Razorpay',
@@ -721,22 +703,15 @@ export const CheckoutView: React.FC = () => {
                 </h3>
               </div>
               <span className="text-xs text-stone-400 flex items-center gap-1 font-medium">
-                <Lock className="w-3.5 h-3.5 text-emerald-600" /> 256-Bit Bank Grade SSL
+                <Lock className="w-3.5 h-3.5 text-emerald-600" /> Secure checkout
               </span>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-semibold text-stone-900">Secure online payment with Razorpay</p>
-                <p className="text-xs text-stone-500">UPI, cards, netbanking and wallets are available in checkout.</p>
+                <p className="text-sm font-semibold text-stone-900">Payment securely processed by Razorpay</p>
+                <p className="text-xs text-stone-500">Payment details are entered only in Razorpay Checkout.</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod(paymentMethod === 'Razorpay' ? 'cod' : 'Razorpay')}
-                className="text-xs font-semibold text-amber-900 underline underline-offset-2"
-              >
-                {paymentMethod === 'Razorpay' ? 'Choose pay on delivery' : 'Choose Razorpay'}
-              </button>
             </div>
           </div>
         </div>
@@ -831,9 +806,7 @@ export const CheckoutView: React.FC = () => {
               ) : (
                 <>
                   <span>
-                    {paymentMethod === 'Razorpay' || paymentMethod.includes('Razorpay')
-                      ? `Pay via Razorpay • ₹${cartTotal.total.toLocaleString()}`
-                      : `Place Furniture Order • ₹${cartTotal.total.toLocaleString()}`}
+                    {`Pay Now • ₹${cartTotal.total.toLocaleString()}`}
                   </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
@@ -847,11 +820,10 @@ export const CheckoutView: React.FC = () => {
         </div>
       </form>
 
-      {/* Launches Razorpay's native checkout without rendering an in-app payment form. */}
-      <RazorpayPaymentModal
-        isOpen={showRazorpayModal}
+      <RazorpayCheckoutLauncher
+        isOpen={launchRazorpayCheckout}
         onClose={() => {
-          setShowRazorpayModal(false);
+          setLaunchRazorpayCheckout(false);
           setIsSubmitting(false);
         }}
         onError={(message) => showToast(message, 'error')}

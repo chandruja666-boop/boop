@@ -29,7 +29,7 @@ declare global {
     }
 }
 
-interface RazorpayPaymentModalProps {
+interface RazorpayCheckoutLauncherProps {
     isOpen: boolean;
     onClose: () => void;
     onError: (message: string) => void;
@@ -65,7 +65,7 @@ function loadRazorpayCheckout(): Promise<void> {
     return checkoutScriptPromise;
 }
 
-export const RazorpayPaymentModal: React.FC<RazorpayPaymentModalProps> = (props) => {
+export const RazorpayCheckoutLauncher: React.FC<RazorpayCheckoutLauncherProps> = (props) => {
     const latestProps = useRef(props);
     latestProps.current = props;
 
@@ -85,7 +85,7 @@ export const RazorpayPaymentModal: React.FC<RazorpayPaymentModalProps> = (props)
                 );
                 if (cancelled) return;
 
-                if (!order.id || !order.keyId || order.testMode) {
+                if (!order.id || !order.keyId) {
                     throw new Error('Razorpay did not return a valid checkout order. Check the backend payment mode and credentials.');
                 }
 
