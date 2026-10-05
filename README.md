@@ -33,13 +33,13 @@ The JSON database fallback is only durable when its directory is durable. Fireba
 
 For local development without Firebase credentials, the server falls back to `server-data.json` and `/api/health` reports `persistence: "local-json"`; these local edits are not shared. Use a dedicated Firebase development project if you want to test the complete shared flow. On Render, remove `DATA_DIR` if Firebase is the only persistence target, or retain it as a local cache. Keep `FIREBASE_REQUIRED=true` in production so a missing Firebase configuration prevents the backend silently starting in local-only mode.
 
-For local verification, set `OTP_MODE=test`, `PAYMENT_MODE=test`, and configure a strong `ADMIN_PASSWORD` in the backend environment. Test OTP codes are returned only by the backend in test mode. Admin writes require a currently valid admin session. Production payment mode rejects test Razorpay keys.
+For local verification, set `OTP_MODE=test`, `PAYMENT_MODE=test`, and configure a strong `ADMIN_PASSWORD` in the backend environment. Test OTP codes are returned only by the backend in test mode. Admin writes require a currently valid admin session. Test payments use Razorpay's native checkout with a `rzp_test_...` key pair; production mode requires live Razorpay keys.
 
 ## Razorpay Standard Checkout
 
 Set `PAYMENT_MODE=production` and configure the **live** `RAZORPAY_KEY_ID` (`rzp_live_...`) and `RAZORPAY_KEY_SECRET` on the deployed backend only. The server calculates the order amount from its product prices, stock, and coupon data; it rejects a client total that does not match. In the Razorpay dashboard, register `https://<your-backend-host>/api/webhooks/razorpay` as a webhook URL and enable the `payment.captured` event. Set `RAZORPAY_WEBHOOK_SECRET` on the backend to the same secret configured in the dashboard. Never expose the key secret or webhook secret in frontend variables.
 
-The backend creates INR orders, verifies the checkout signature and captured payment against Razorpay's API, and updates matching persisted orders when a signed `payment.captured` webhook arrives. `PAYMENT_MODE=test` is a local-only simulation and does not contact Razorpay. The currently configured local key ID must be replaced by a live key pair before real charges can work.
+The backend creates INR orders with Razorpay, verifies the checkout signature and captured payment against Razorpay's API, and updates matching persisted orders when a signed `payment.captured` webhook arrives. Checkout is displayed by Razorpay's official JavaScript SDK; the app does not collect UPI IDs, card details, or bank transfer information. For sandbox testing, set `PAYMENT_MODE=test` with a Razorpay test key ID (`rzp_test_...`) and test key secret. Use live keys and `PAYMENT_MODE=production` only when ready to accept real charges.
 
 ## Fast2SMS OTP
 

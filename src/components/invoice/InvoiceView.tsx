@@ -88,7 +88,6 @@ export const InvoiceView: React.FC = () => {
       <p style="margin: 2px 0; font-weight: 600;">${invoiceSettings.companyName}</p>
       <p style="margin: 2px 0; color: #57534e;">${invoiceSettings.registeredOfficeAddress}</p>
       <p style="margin: 2px 0; color: #57534e;">GSTIN: ${invoiceSettings.gstin} | CIN: ${invoiceSettings.cin}</p>
-      <p style="margin: 2px 0; color: #78350f; font-size: 10px; font-weight: bold;">Payment Gateway: Razorpay (razorpay.me/@anandhanchandru)</p>
     </div>
     <div style="text-align: right;">
       <div class="invoice-title">${invoiceSettings.invoiceHeader}</div>
@@ -97,7 +96,6 @@ export const InvoiceView: React.FC = () => {
       <p style="margin: 2px 0; color: #57534e;">Order ID: ${order.id}</p>
       <p style="margin: 2px 0; color: #047857; font-weight: bold;">Status: ${order.paymentStatus} (${order.paymentMethod})</p>
       ${order.razorpayPaymentId ? `<p style="margin: 2px 0; font-family: monospace; font-size: 10px; color: #b45309;">Razorpay Txn: ${order.razorpayPaymentId}</p>` : ''}
-      <p style="margin: 2px 0; font-size: 10px; color: #059669;">Settlement: Direct Bank Settled</p>
     </div>
   </div>
 
@@ -261,9 +259,6 @@ export const InvoiceView: React.FC = () => {
                 Razorpay Txn: <strong className="text-stone-800">{order.razorpayPaymentId}</strong>
               </p>
             )}
-            <p className="text-[11px] text-emerald-700 font-medium">
-              Settlement: Direct Bank Settlement (razorpay.me/@anandhanchandru)
-            </p>
           </div>
         </div>
 
@@ -398,4 +393,3 @@ export const InvoiceView: React.FC = () => {
     </div>
   );
 };
-

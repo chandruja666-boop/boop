@@ -168,22 +168,11 @@ export interface TrackingStep {
 
 export type PaymentMethod =
   | 'Razorpay'
-  | 'Razorpay (razorpay.me/@anandhanchandru)'
   | 'UPI'
   | 'Credit/Debit Card'
   | 'Net Banking'
   | 'EMI'
   | 'Cash on Delivery';
-
-export const RAZORPAY_CONFIG = {
-  merchantHandle: 'razorpay.me/@anandhanchandru',
-  paymentUrl: 'https://razorpay.me/@anandhanchandru',
-  merchantName: 'Anandhan Chandru',
-  businessName: 'CP Furniture',
-  upiId: 'chandruja666-3@okaxis',
-  supportEmail: 'chandruja666@gmail.com',
-  settlementType: 'Direct Bank Settlement (Registered Axis Account)'
-};
 
 export interface Order {
   id: string;
@@ -209,8 +198,6 @@ export interface Order {
   paymentStatus: 'Paid' | 'Pending' | 'Refunded';
   razorpayPaymentId?: string;
   razorpayOrderId?: string;
-  razorpayHandle?: string;
-  bankSettlementStatus?: 'Direct Settled to Bank' | 'Instant Settled' | 'Processing';
   paymentReference?: string;
   orderStatus: OrderStatus;
   trackingSteps: TrackingStep[];
@@ -374,4 +361,3 @@ export interface PurchasingCredentials {
   userId: string;
   pass: string;
 }
-

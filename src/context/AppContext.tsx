@@ -156,8 +156,6 @@ export interface AppContextType {
     notes?: string,
     extraPaymentInfo?: {
       razorpayPaymentId?: string;
-      razorpayHandle?: string;
-      bankSettlementStatus?: 'Direct Settled to Bank' | 'Instant Settled' | 'Processing';
       paymentReference?: string;
     }
   ) => Order;
@@ -559,8 +557,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     notes?: string,
     extraPaymentInfo?: {
       razorpayPaymentId?: string;
-      razorpayHandle?: string;
-      bankSettlementStatus?: 'Direct Settled to Bank' | 'Instant Settled' | 'Processing';
       paymentReference?: string;
     }
   ): Order => {
@@ -605,8 +601,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       paymentMethod: paymentMethod as any,
       paymentStatus: isCod ? 'Pending' : 'Paid',
       razorpayPaymentId: extraPaymentInfo?.razorpayPaymentId,
-      razorpayHandle: extraPaymentInfo?.razorpayHandle || (paymentMethod.includes('Razorpay') ? 'razorpay.me/@anandhanchandru' : undefined),
-      bankSettlementStatus: extraPaymentInfo?.bankSettlementStatus || (paymentMethod.includes('Razorpay') ? 'Direct Settled to Bank' : undefined),
       paymentReference: extraPaymentInfo?.paymentReference,
       orderStatus: 'Pending',
       notes

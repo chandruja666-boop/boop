@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { RAZORPAY_CONFIG } from '../../types';
 import { cloudApi } from '../../services/cloudApi';
 
 interface RazorpayResponse {
@@ -43,9 +42,6 @@ interface RazorpayPaymentModalProps {
     onPaymentSuccess: (paymentDetails: {
         paymentId: string;
         orderId: string;
-        handle: string;
-        method: string;
-        bankSettlement: string;
     }) => void;
 }
 
@@ -89,6 +85,10 @@ export const RazorpayPaymentModal: React.FC<RazorpayPaymentModalProps> = (props)
                 );
                 if (cancelled) return;
 
+                if (!order.id || !order.keyId || order.testMode) {
+                    throw new Error('Razorpay did not return a valid checkout order. Check the backend payment mode and credentials.');
+                }
+
                 const completePayment = async (response: RazorpayResponse) => {
                     if (response.razorpay_order_id !== order.id) {
                         latestProps.current.onError('Payment response does not match this order.');
@@ -106,10 +106,7 @@ export const RazorpayPaymentModal: React.FC<RazorpayPaymentModalProps> = (props)
                         if (!verification.verified) throw new Error('Razorpay payment verification failed.');
                         latestProps.current.onPaymentSuccess({
                             paymentId: response.razorpay_payment_id,
-                            orderId: response.razorpay_order_id,
-                            handle: RAZORPAY_CONFIG.merchantHandle,
-                            method: 'Razorpay Standard Checkout',
-                            bankSettlement: RAZORPAY_CONFIG.settlementType
+                            orderId: response.razorpay_order_id
                         });
                     } catch (error) {
                         latestProps.current.onError(error instanceof Error ? error.message : 'Payment verification failed.');
@@ -117,19 +114,10 @@ export const RazorpayPaymentModal: React.FC<RazorpayPaymentModalProps> = (props)
                     }
                 };
 
-                if (order.testMode) {
-                    await completePayment({
-                        razorpay_payment_id: `pay_test_${Date.now()}`,
-                        razorpay_order_id: order.id,
-                        razorpay_signature: 'test'
-                    });
-                    return;
-                }
-
                 await loadRazorpayCheckout();
                 if (cancelled) return;
-                if (!window.Razorpay || !order.keyId) {
-                    throw new Error('Razorpay Checkout is unavailable. Check the production key configuration.');
+                if (!window.Razorpay) {
+                    throw new Error('Razorpay Checkout is unavailable. Check the configured Razorpay key ID.');
                 }
 
                 const checkout = new window.Razorpay({

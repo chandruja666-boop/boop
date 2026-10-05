@@ -328,7 +328,7 @@ export const CartView: React.FC = () => {
             <div className="pt-2 text-center">
               <span className="text-[11px] text-stone-500 flex items-center justify-center gap-1.5 font-medium">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Instant Checkout powered by <strong>Razorpay</strong> &bull; Direct Bank Settlement</span>
+                <span>Secure online payment powered by <strong>Razorpay</strong></span>
               </span>
             </div>
           </div>

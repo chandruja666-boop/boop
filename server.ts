@@ -764,24 +764,17 @@ app.post('/api/payments/razorpay/order', async (req, res) => {
         res.status(400).json({ message: 'The checkout amount does not match the server-calculated cart total. Refresh your cart and try again.' });
         return;
     }
-    if (paymentMode === 'test') {
-        const id = `order_test_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-        quoteDatabase.paymentIntents = getPaymentIntents(quoteDatabase);
-        quoteDatabase.paymentIntents[id] = { amount, currency, createdAt: new Date().toISOString(), items: quotedItems, subtotal, discount, deliveryCharge };
-        await writeDatabase(quoteDatabase);
-        res.json({ id, amount, currency, testMode: true });
+    if (paymentMode !== 'production' && paymentMode !== 'test') {
+        res.status(503).json({ message: 'Razorpay payments are disabled. Set PAYMENT_MODE=test or production to enable them.' });
         return;
     }
-    if (paymentMode !== 'production') {
-        res.status(503).json({ message: 'Razorpay payments are disabled. Set PAYMENT_MODE=production to enable them.' });
-        return;
-    }
-    if (!razorpayKeyId.startsWith('rzp_live_')) {
-        res.status(503).json({ message: 'Live Razorpay credentials are required for production payments.' });
+    const requiredKeyPrefix = paymentMode === 'production' ? 'rzp_live_' : 'rzp_test_';
+    if (!razorpayKeyId.startsWith(requiredKeyPrefix)) {
+        res.status(503).json({ message: `${paymentMode === 'production' ? 'Live' : 'Test'} Razorpay credentials are required for this payment mode.` });
         return;
     }
     if (!razorpayKeyId || !razorpayKeySecret) {
-        res.status(503).json({ message: 'Razorpay production credentials are not configured.' });
+        res.status(503).json({ message: 'Razorpay credentials are not configured.' });
         return;
     }
     const auth = Buffer.from(`${razorpayKeyId}:${razorpayKeySecret}`).toString('base64');
@@ -825,19 +818,13 @@ app.post('/api/payments/razorpay/verify', async (req, res) => {
         res.status(400).json({ verified: false, message: 'Payment order ID or amount does not match the server-created payment intent.' });
         return;
     }
-    if (paymentMode === 'test' && paymentId.startsWith('pay_test_') && orderId.startsWith('order_test_')) {
-        intentDatabase.verifiedPayments = getVerifiedPayments(intentDatabase);
-        intentDatabase.verifiedPayments[orderId] = { paymentId, amount, verifiedAt: new Date().toISOString() };
-        await writeDatabase(intentDatabase);
-        res.json({ verified: true, testMode: true, orderId, amount });
-        return;
-    }
     if (!razorpayKeySecret) {
-        res.status(503).json({ verified: false, message: 'Razorpay production credentials are not configured.' });
+        res.status(503).json({ verified: false, message: 'Razorpay credentials are not configured.' });
         return;
     }
-    if (paymentMode !== 'production' || !razorpayKeyId.startsWith('rzp_live_')) {
-        res.status(503).json({ verified: false, message: 'Live Razorpay credentials are required for production payment verification.' });
+    const requiredKeyPrefix = paymentMode === 'production' ? 'rzp_live_' : 'rzp_test_';
+    if ((paymentMode !== 'production' && paymentMode !== 'test') || !razorpayKeyId.startsWith(requiredKeyPrefix)) {
+        res.status(503).json({ verified: false, message: 'Razorpay credentials do not match the configured payment mode.' });
         return;
     }
     const payload = `${orderId}|${paymentId}`;

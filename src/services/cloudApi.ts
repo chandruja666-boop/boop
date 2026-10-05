@@ -146,7 +146,7 @@ export const cloudApi = {
         return request('/auth/admin/session', { headers: { Authorization: `Bearer ${token}` } });
     },
 
-    async createRazorpayOrder(amount: number, currency: string, receipt: string, items: Array<{ productId: string; quantity: number }>, couponCode?: string): Promise<{ id: string; amount: number; currency: string; testMode?: boolean; keyId?: string }> {
+    async createRazorpayOrder(amount: number, currency: string, receipt: string, items: Array<{ productId: string; quantity: number }>, couponCode?: string): Promise<{ id: string; amount: number; currency: string; keyId: string; testMode?: boolean }> {
         return request('/payments/razorpay/order', { method: 'POST', body: JSON.stringify({ amount, currency, receipt, items, couponCode }) });
     },
 

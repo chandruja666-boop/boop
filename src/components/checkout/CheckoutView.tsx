@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  ShieldCheck,
   Truck,
   CheckCircle2,
   ArrowRight,
@@ -13,7 +12,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { Address, PaymentMethod, Order, RAZORPAY_CONFIG } from '../../types';
+import { Address, PaymentMethod, Order } from '../../types';
 import { RazorpayPaymentModal } from './RazorpayStandardCheckout.tsx';
 
 export const CheckoutView: React.FC = () => {
@@ -249,19 +248,14 @@ export const CheckoutView: React.FC = () => {
   const handleRazorpaySuccess = (paymentDetails: {
     paymentId: string;
     orderId: string;
-    handle: string;
-    method: string;
-    bankSettlement: string;
   }) => {
     setShowRazorpayModal(false);
     const newOrder = placeOrder(
       activeAddress,
-      'Razorpay (razorpay.me/@anandhanchandru)',
+      'Razorpay',
       deliveryNote,
       {
         razorpayPaymentId: paymentDetails.paymentId,
-        razorpayHandle: paymentDetails.handle,
-        bankSettlementStatus: 'Direct Settled to Bank',
         paymentReference: paymentDetails.orderId
       }
     );
@@ -291,58 +285,6 @@ export const CheckoutView: React.FC = () => {
           <p className="text-sm text-stone-600 max-w-md mx-auto">
             Your furniture order <strong className="text-stone-900 font-mono font-bold">{orderPlaced.id}</strong> has been received by our central workshop concierge.
           </p>
-        </div>
-
-        {/* Razorpay Verified Settlement Receipt Banner */}
-        <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-amber-950 text-white rounded-3xl p-6 text-left border border-amber-500/30 shadow-xl space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-800 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-lg">
-                ₹
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-white flex items-center gap-1.5">
-                  <span>Razorpay Payment Verified</span>
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                </h4>
-                <p className="text-xs text-amber-300 font-mono">
-                  {orderPlaced.razorpayHandle || RAZORPAY_CONFIG.merchantHandle} &bull; {RAZORPAY_CONFIG.merchantName}
-                </p>
-              </div>
-            </div>
-
-            <div className="text-right">
-              <span className="text-[10px] text-stone-400 block uppercase">Settlement Status</span>
-              <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2.5 py-1 rounded-full inline-block">
-                Direct Settled to Bank Account
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-            <div>
-              <span className="text-stone-400 text-[11px] block">Razorpay Txn ID</span>
-              <span className="font-mono text-amber-300 font-semibold">
-                {orderPlaced.razorpayPaymentId || `pay_${Date.now().toString().slice(-8)}`}
-              </span>
-            </div>
-            <div>
-              <span className="text-stone-400 text-[11px] block">Merchant Handle</span>
-              <span className="font-mono text-stone-200">
-                {orderPlaced.razorpayHandle || RAZORPAY_CONFIG.merchantHandle}
-              </span>
-            </div>
-            <div>
-              <span className="text-stone-400 text-[11px] block">Payment Gateway</span>
-              <span className="font-semibold text-stone-200">Razorpay Secure 256-Bit</span>
-            </div>
-            <div>
-              <span className="text-stone-400 text-[11px] block">Amount Settled</span>
-              <span className="font-bold text-amber-400 font-mono text-sm">
-                ₹{(orderPlaced.total ?? orderPlaced.grandTotal ?? 0).toLocaleString()}
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* Order Details Card */}
@@ -905,7 +847,7 @@ export const CheckoutView: React.FC = () => {
         </div>
       </form>
 
-      {/* Embedded Razorpay Secure Gateway Modal */}
+      {/* Launches Razorpay's native checkout without rendering an in-app payment form. */}
       <RazorpayPaymentModal
         isOpen={showRazorpayModal}
         onClose={() => {
