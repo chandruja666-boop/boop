@@ -754,10 +754,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setAdminUser(admin);
       setIsAdmin(true);
       if (result.token) localStorage.setItem('cp_admin_session_token', result.token);
-      showToast('Admin access authorized. Welcome to Showroom Backoffice.', 'success');
       return true;
     } catch {
-      showToast('Invalid admin credentials or authentication service unavailable.', 'error');
       return false;
     }
   };

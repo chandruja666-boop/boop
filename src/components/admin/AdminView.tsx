@@ -342,7 +342,7 @@ export const AdminView: React.FC = () => {
     } else {
       setAdminEmail('');
       setAdminPassword('');
-      showToast('Invalid credentials. Please verify your email and password.', 'error');
+      showToast('Unable to sign in. Check your login details or try again later.', 'error');
     }
   };
 

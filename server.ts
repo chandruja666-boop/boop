@@ -43,6 +43,30 @@ const adminEmail = process.env.ADMIN_EMAIL?.trim() || '';
 const adminPassword = process.env.ADMIN_PASSWORD || '';
 const adminSessions = new Map<string, { user: { name: string; email: string; role: string }; expiresAt: number }>();
 
+function describeError(error: unknown): { name: string; code?: string | number; message: string } {
+    if (error instanceof Error) {
+        const firebaseError = error as Error & { code?: string | number };
+        let message = error.message;
+        const sensitiveValues = [
+            adminEmail,
+            adminPassword,
+            process.env.FIREBASE_DATABASE_URL || '',
+            process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '',
+            process.env.FAST2SMS_API_KEY || '',
+            razorpayKeySecret
+        ].filter(Boolean);
+        sensitiveValues.forEach((value) => {
+            message = message.replaceAll(value, '[REDACTED]');
+        });
+        return {
+            name: error.name,
+            ...(firebaseError.code !== undefined ? { code: firebaseError.code } : {}),
+            message
+        };
+    }
+    return { name: 'UnknownError', message: 'An unknown error occurred.' };
+}
+
 // CORS Policy Configuration allowing Authorization header
 app.use((_req, res, next) => {
     if (_req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -65,8 +89,12 @@ function readDatabase(): Database {
 
     try {
         return JSON.parse(fs.readFileSync(databasePath, 'utf8')) as Database;
-    } catch {
-        return { products: [], orders: INITIAL_ORDERS, categories: INITIAL_CATEGORIES, coupons: INITIAL_COUPONS };
+    } catch (error) {
+        console.error('[database] Failed to read/parse local database snapshot.', {
+            path: databasePath,
+            error: describeError(error)
+        });
+        throw error;
     }
 }
 
@@ -83,13 +111,22 @@ function writeDatabase(database: Database): Promise<void> {
             writeLocalSnapshot();
             return Promise.resolve();
         } catch (error) {
-            console.error('Failed to write local database:', error);
+            console.error('[database] Failed to write local JSON snapshot.', {
+                path: databasePath,
+                error: describeError(error)
+            });
             return Promise.reject(error);
         }
     }
 
     firebaseWriteQueue = firebaseWriteQueue.catch(() => undefined).then(async () => {
-        await firebaseDatabase?.ref('cpFurniture/state').set(snapshot);
+        try {
+            await firebaseDatabase?.ref('cpFurniture/state').set(snapshot);
+            console.info('[database] Firebase state write succeeded.');
+        } catch (error) {
+            console.error('[database] Firebase state write failed.', { error: describeError(error) });
+            throw error;
+        }
         writeLocalSnapshot();
     });
     return firebaseWriteQueue;
@@ -108,58 +145,88 @@ function asyncRoute(handler: (req: express.Request, res: express.Response) => Pr
 async function initializePersistentStore(): Promise<void> {
     const serviceAccountSetting = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '';
     const databaseUrl = process.env.FIREBASE_DATABASE_URL || '';
+    const firebaseRequired = process.env.FIREBASE_REQUIRED?.trim().toLowerCase() === 'true';
+    console.info('[database] Starting persistence initialization.', {
+        firebaseRequired,
+        hasFirebaseDatabaseUrl: Boolean(databaseUrl),
+        hasFirebaseServiceAccount: Boolean(serviceAccountSetting),
+        hasAdminEmail: Boolean(adminEmail),
+        hasAdminPassword: Boolean(adminPassword),
+        localSnapshotPath: databasePath
+    });
+    if (adminPassword && adminPassword.length < 12) {
+        console.warn('[auth] ADMIN_PASSWORD is shorter than 12 characters; use a longer, unique secret.');
+    }
     if (!serviceAccountSetting || !databaseUrl) {
-        if (process.env.FIREBASE_REQUIRED === 'true') {
-            throw new Error('FIREBASE_REQUIRED=true but FIREBASE_DATABASE_URL or FIREBASE_SERVICE_ACCOUNT_JSON is missing.');
+        if (firebaseRequired) {
+            throw new Error('Firebase is required but FIREBASE_DATABASE_URL or FIREBASE_SERVICE_ACCOUNT_JSON is missing.');
         }
-        console.warn('Firebase is not configured; using local JSON storage. Cross-instance persistence is unavailable.');
+        console.warn('[database] Firebase is not configured; using local JSON storage. Cross-instance persistence is unavailable.');
         return;
     }
 
-    const decodedAccount = serviceAccountSetting.startsWith('base64:')
-        ? Buffer.from(serviceAccountSetting.slice(7), 'base64').toString('utf8')
-        : serviceAccountSetting;
-    const serviceAccount = JSON.parse(decodedAccount) as { project_id?: string; private_key?: string; client_email?: string };
-    if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
-        throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is not a valid Firebase service account key.');
-    }
-    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-
-    const projectId = serviceAccount.project_id;
-    const firebaseApp = initializeApp({
-        credential: cert({
-            projectId,
-            clientEmail: serviceAccount.client_email,
-            privateKey: serviceAccount.private_key
-        }),
-        databaseURL: databaseUrl
-    }, `cp-furniture-${projectId}`);
-    firebaseDatabase = getDatabase(firebaseApp);
-    const stateReference = firebaseDatabase.ref('cpFurniture/state');
-    const remoteState = await stateReference.get();
-    if (remoteState.exists()) {
-        const temporaryPath = `${databasePath}.tmp`;
-        fs.writeFileSync(temporaryPath, JSON.stringify(remoteState.val(), null, 2), 'utf8');
-        fs.renameSync(temporaryPath, databasePath);
-    } else {
-        const initialState = readDatabase();
-        await stateReference.set(JSON.parse(JSON.stringify(initialState)));
-    }
-    stateReference.on('value', (snapshot) => {
-        if (!snapshot.exists()) return;
-        const state = snapshot.val() as Database;
-        try {
-            const temporaryPath = `${databasePath}.tmp`;
-            fs.writeFileSync(temporaryPath, JSON.stringify(state, null, 2), 'utf8');
-            fs.renameSync(temporaryPath, databasePath);
-            publish('data.updated', null);
-        } catch (error) {
-            console.error('Failed to refresh local cache from Firebase:', error);
+    try {
+        const decodedAccount = serviceAccountSetting.startsWith('base64:')
+            ? Buffer.from(serviceAccountSetting.slice(7), 'base64').toString('utf8')
+            : serviceAccountSetting;
+        const serviceAccount = JSON.parse(decodedAccount) as { project_id?: string; private_key?: string; client_email?: string };
+        if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
+            throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is missing project_id, private_key, or client_email.');
         }
-    }, (error) => {
-        console.error('Firebase Realtime Database listener failed:', error);
-    });
-    console.log(`Firebase Realtime Database connected for project ${projectId}.`);
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+
+        const databaseHost = new URL(databaseUrl).host;
+        const projectId = serviceAccount.project_id;
+        console.info('[database] Firebase credentials parsed; initializing Admin SDK.', {
+            projectId,
+            databaseHost,
+            serviceAccountEmailPresent: Boolean(serviceAccount.client_email)
+        });
+        const firebaseApp = initializeApp({
+            credential: cert({
+                projectId,
+                clientEmail: serviceAccount.client_email,
+                privateKey: serviceAccount.private_key
+            }),
+            databaseURL: databaseUrl
+        }, `cp-furniture-${projectId}`);
+        firebaseDatabase = getDatabase(firebaseApp);
+        const stateReference = firebaseDatabase.ref('cpFurniture/state');
+        console.info('[database] Checking Firebase state path.');
+        const remoteState = await stateReference.get();
+        if (remoteState.exists()) {
+            const temporaryPath = `${databasePath}.tmp`;
+            fs.writeFileSync(temporaryPath, JSON.stringify(remoteState.val(), null, 2), 'utf8');
+            fs.renameSync(temporaryPath, databasePath);
+            console.info('[database] Existing Firebase state loaded into local snapshot.');
+        } else {
+            const initialState = readDatabase();
+            await stateReference.set(JSON.parse(JSON.stringify(initialState)));
+            console.info('[database] Firebase state path was empty; initialized it from local snapshot.');
+        }
+        stateReference.on('value', (snapshot) => {
+            if (!snapshot.exists()) return;
+            const state = snapshot.val() as Database;
+            try {
+                const temporaryPath = `${databasePath}.tmp`;
+                fs.writeFileSync(temporaryPath, JSON.stringify(state, null, 2), 'utf8');
+                fs.renameSync(temporaryPath, databasePath);
+                publish('data.updated', null);
+            } catch (error) {
+                console.error('[database] Failed to refresh local cache from Firebase.', { error: describeError(error) });
+            }
+        }, (error) => {
+            console.error('[database] Firebase Realtime Database listener failed.', { error: describeError(error) });
+        });
+        console.info(`[database] Firebase Realtime Database connected for project ${projectId}.`);
+    } catch (error) {
+        console.error('[database] Firebase initialization failed.', {
+            databaseUrlConfigured: Boolean(databaseUrl),
+            serviceAccountConfigured: Boolean(serviceAccountSetting),
+            error: describeError(error)
+        });
+        throw error;
+    }
 }
 
 function normalizeIndianMobile(value: string): string | null {
@@ -175,6 +242,12 @@ function publish(event: string, payload: unknown): void {
 
 function hash(value: string): string {
     return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function hasMatchingSecret(expected: string, actual: string): boolean {
+    const expectedBytes = Buffer.from(expected);
+    const actualBytes = Buffer.from(actual);
+    return expectedBytes.length === actualBytes.length && crypto.timingSafeEqual(expectedBytes, actualBytes);
 }
 
 function razorpaySignature(payload: string): string {
@@ -527,17 +600,31 @@ app.post('/api/auth/otp/verify', (req, res) => {
 });
 
 app.post('/api/auth/admin/login', (req, res) => {
+    console.info('[auth] Admin login request received.', {
+        emailProvided: typeof req.body.email === 'string' && req.body.email.trim().length > 0,
+        passwordProvided: typeof req.body.password === 'string' && req.body.password.length > 0,
+        adminEmailConfigured: Boolean(adminEmail),
+        adminPasswordConfigured: Boolean(adminPassword)
+    });
     if (!adminEmail || !adminPassword) {
+        console.error('[auth] Admin login unavailable because backend credentials are not fully configured.');
         return res.status(503).json({ success: false, message: 'Admin credentials are not configured on the backend.' });
     }
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    if (!email || email.trim().toLowerCase() !== adminEmail.toLowerCase() || password !== adminPassword) {
+    const emailMatches = Boolean(email) && email === adminEmail.toLowerCase();
+    const passwordMatches = hasMatchingSecret(adminPassword, password);
+    if (!emailMatches || !passwordMatches) {
+        console.warn('[auth] Admin login rejected.', {
+            emailMatches,
+            passwordMatches
+        });
         return res.status(401).json({ success: false, message: 'Invalid admin credentials.' });
     }
     const user = { name: 'Chief Merchandiser', email: '', role: 'Super Admin' };
     const token = crypto.randomBytes(32).toString('hex');
     adminSessions.set(token, { user, expiresAt: Date.now() + 8 * 60 * 60 * 1000 });
+    console.info('[auth] Admin login succeeded; session issued.');
     res.json({ success: true, user, token });
 });
 
