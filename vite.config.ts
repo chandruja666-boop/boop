@@ -12,6 +12,7 @@ export default defineConfig(() => {
       },
     },
     server: {
+      allowedHosts: ['cp-furniture.in', 'www.cp-furniture.in', 'localhost'],
       proxy: {
         '/api': 'http://localhost:4000'
       },
