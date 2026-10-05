@@ -741,17 +741,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // ADMIN OPERATIONS
   const loginAdmin = async (email: string, pass: string): Promise<boolean> => {
-    try {
-      const result = await cloudApi.adminLogin(email, pass);
-      if (!result.success || !result.user) throw new Error('Invalid credentials');
-      const admin = result.user;
-      setAdminUser(admin);
-      setIsAdmin(true);
-      if (result.token) localStorage.setItem('cp_admin_session_token', result.token);
-      return true;
-    } catch {
-      return false;
-    }
+    const result = await cloudApi.adminLogin(email, pass);
+    if (!result.success || !result.user) throw new Error('Invalid admin credentials.');
+    const admin = result.user;
+    setAdminUser(admin);
+    setIsAdmin(true);
+    if (result.token) localStorage.setItem('cp_admin_session_token', result.token);
+    return true;
   };
 
   const logoutAdmin = () => {

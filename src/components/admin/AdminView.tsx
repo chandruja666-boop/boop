@@ -334,15 +334,15 @@ export const AdminView: React.FC = () => {
   // Handle Admin Login
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await loginAdmin(adminEmail, adminPassword);
-    if (ok) {
+    try {
+      await loginAdmin(adminEmail, adminPassword);
       setAdminEmail('');
       setAdminPassword('');
       showToast('Admin access authorized. Welcome back!', 'success');
-    } else {
+    } catch (error) {
       setAdminEmail('');
       setAdminPassword('');
-      showToast('Unable to sign in. Check your login details or try again later.', 'error');
+      showToast(error instanceof Error ? error.message : 'Unable to sign in. Check your login details or try again later.', 'error');
     }
   };
 

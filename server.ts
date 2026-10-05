@@ -717,90 +717,167 @@ app.get('/api/auth/admin/session', (req, res) => {
 });
 
 app.post('/api/payments/razorpay/order', async (req, res) => {
-    const amountInRupees = Number(req.body.amount);
-    const currency = String(req.body.currency || 'INR').toUpperCase();
-    const receipt = String(req.body.receipt || '');
-    const amount = Math.round(amountInRupees * 100);
-    if (!Number.isFinite(amountInRupees) || amountInRupees <= 0 || amountInRupees > 99999999 || !Number.isSafeInteger(amount) || Math.abs(amountInRupees * 100 - amount) > 0.000001 || currency !== 'INR') {
-        res.status(400).json({ message: 'A valid amount and supported currency (INR) are required.' });
-        return;
-    }
-    if (receipt && !/^[A-Za-z0-9_-]{1,40}$/.test(receipt)) {
-        res.status(400).json({ message: 'Receipt must contain only letters, numbers, underscores, or hyphens (maximum 40 characters).' });
-        return;
-    }
-    const items = Array.isArray(req.body.items) ? req.body.items as Array<{ productId?: string; quantity?: number }> : [];
-    if (items.length === 0 || items.length > 50 || items.some((item) => typeof item.productId !== 'string' || !Number.isSafeInteger(item.quantity) || Number(item.quantity) <= 0 || Number(item.quantity) > 100)) {
-        res.status(400).json({ message: 'A cart with valid product IDs and quantities is required.' });
-        return;
-    }
-    const quoteDatabase = readDatabase();
-    let subtotal = 0;
-    const quotedItems: Array<{ productId: string; quantity: number }> = [];
-    for (const item of items) {
-        const product = quoteDatabase.products.find((candidate) => candidate.id === item.productId && candidate.isPublished);
-        const quantity = Number(item.quantity);
-        if (!product || product.stock < quantity) {
-            res.status(400).json({ message: 'A cart product is unavailable or has insufficient stock.' });
-            return;
-        }
-        subtotal += product.salePrice * quantity;
-        quotedItems.push({ productId: product.id, quantity });
-    }
-    let discount = 0;
-    const couponCode = String(req.body.couponCode || '').trim().toUpperCase();
-    if (couponCode) {
-        const coupon = (quoteDatabase.coupons || INITIAL_COUPONS).find((candidate) => candidate.code.toUpperCase() === couponCode && candidate.isEnabled);
-        if (!coupon || new Date(coupon.expiryDate) < new Date() || subtotal < (coupon.minOrderValue || 0)) {
-            res.status(400).json({ message: 'The submitted coupon is invalid, expired, or does not meet its minimum order amount.' });
-            return;
-        }
-        discount = coupon.discountType === 'percentage' ? Math.round(Math.min(subtotal * coupon.discountValue / 100, coupon.maxDiscount || Number.MAX_SAFE_INTEGER)) : Math.round(coupon.discountValue);
-        discount = Math.min(discount, subtotal);
-    }
-    const deliveryCharge = subtotal > 25000 || subtotal === 0 ? 0 : 999;
-    const expectedAmount = Math.round(Math.max(0, subtotal - discount + deliveryCharge) * 100);
-    if (amount !== expectedAmount) {
-        res.status(400).json({ message: 'The checkout amount does not match the server-calculated cart total. Refresh your cart and try again.' });
-        return;
-    }
-    if (paymentMode !== 'production' && paymentMode !== 'test') {
-        res.status(503).json({ message: 'Razorpay payments are disabled. Set PAYMENT_MODE=test or production to enable them.' });
-        return;
-    }
-    const requiredKeyPrefix = paymentMode === 'production' ? 'rzp_live_' : 'rzp_test_';
-    if (!razorpayKeyId.startsWith(requiredKeyPrefix)) {
-        res.status(503).json({ message: `${paymentMode === 'production' ? 'Live' : 'Test'} Razorpay credentials are required for this payment mode.` });
-        return;
-    }
-    if (!razorpayKeyId || !razorpayKeySecret) {
-        res.status(503).json({ message: 'Razorpay credentials are not configured.' });
-        return;
-    }
-    const auth = Buffer.from(`${razorpayKeyId}:${razorpayKeySecret}`).toString('base64');
     try {
-        const response = await fetch('https://api.razorpay.com/v1/orders', {
-            method: 'POST',
-            headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount, currency, ...(receipt ? { receipt } : {}) })
-        });
-        const razorpayOrder = await response.json() as { id?: string; amount?: number; currency?: string };
-        if (response.ok && razorpayOrder.id) {
-            quoteDatabase.paymentIntents = getPaymentIntents(quoteDatabase);
-            quoteDatabase.paymentIntents[razorpayOrder.id] = {
-                amount,
-                currency: razorpayOrder.currency || 'INR',
-                createdAt: new Date().toISOString(),
-                items: quotedItems,
-                subtotal,
-                discount,
-                deliveryCharge
-            };
-            await writeDatabase(quoteDatabase);
+        const amountInRupees = Number(req.body.amount);
+        const currency = String(req.body.currency || 'INR').toUpperCase();
+        const receipt = String(req.body.receipt || '');
+        const amount = Math.round(amountInRupees * 100);
+        if (!Number.isFinite(amountInRupees) || amountInRupees <= 0 || amountInRupees > 99999999 || !Number.isSafeInteger(amount) || Math.abs(amountInRupees * 100 - amount) > 0.000001 || currency !== 'INR') {
+            res.status(400).json({ message: 'A valid amount and supported currency (INR) are required.' });
+            return;
         }
-        res.status(response.status).json({ ...razorpayOrder, keyId: razorpayKeyId });
-    } catch {
-        res.status(502).json({ message: 'Unable to reach Razorpay order service.' });
+        if (receipt && !/^[A-Za-z0-9_-]{1,40}$/.test(receipt)) {
+            res.status(400).json({ message: 'Receipt must contain only letters, numbers, underscores, or hyphens (maximum 40 characters).' });
+            return;
+        }
+        const items = Array.isArray(req.body.items) ? req.body.items as Array<{ productId?: string; quantity?: number }> : [];
+        if (items.length === 0 || items.length > 50 || items.some((item) => typeof item.productId !== 'string' || !Number.isSafeInteger(item.quantity) || Number(item.quantity) <= 0 || Number(item.quantity) > 100)) {
+            res.status(400).json({ message: 'A cart with valid product IDs and quantities is required.' });
+            return;
+        }
+        const quoteDatabase = readDatabase();
+        let subtotal = 0;
+        const quotedItems: Array<{ productId: string; quantity: number }> = [];
+        for (const item of items) {
+            const product = quoteDatabase.products.find((candidate) => candidate.id === item.productId && candidate.isPublished);
+            const quantity = Number(item.quantity);
+            if (!product || product.stock < quantity) {
+                res.status(400).json({ message: 'A cart product is unavailable or has insufficient stock.' });
+                return;
+            }
+            subtotal += product.salePrice * quantity;
+            quotedItems.push({ productId: product.id, quantity });
+        }
+        let discount = 0;
+        const couponCode = String(req.body.couponCode || '').trim().toUpperCase();
+        if (couponCode) {
+            const coupon = (quoteDatabase.coupons || INITIAL_COUPONS).find((candidate) => candidate.code.toUpperCase() === couponCode && candidate.isEnabled);
+            if (!coupon || new Date(coupon.expiryDate) < new Date() || subtotal < (coupon.minOrderValue || 0)) {
+                res.status(400).json({ message: 'The submitted coupon is invalid, expired, or does not meet its minimum order amount.' });
+                return;
+            }
+            discount = coupon.discountType === 'percentage' ? Math.round(Math.min(subtotal * coupon.discountValue / 100, coupon.maxDiscount || Number.MAX_SAFE_INTEGER)) : Math.round(coupon.discountValue);
+            discount = Math.min(discount, subtotal);
+        }
+        const deliveryCharge = subtotal > 25000 || subtotal === 0 ? 0 : 999;
+        const expectedAmount = Math.round(Math.max(0, subtotal - discount + deliveryCharge) * 100);
+        if (amount !== expectedAmount) {
+            res.status(400).json({ message: 'The checkout amount does not match the server-calculated cart total. Refresh your cart and try again.' });
+            return;
+        }
+        if (paymentMode !== 'production' && paymentMode !== 'test') {
+            console.error('[payments] Razorpay order creation is disabled.', {
+                paymentMode,
+                hasKeyId: Boolean(razorpayKeyId),
+                hasKeySecret: Boolean(razorpayKeySecret)
+            });
+            res.status(503).json({ message: 'Razorpay payments are disabled. Configure PAYMENT_MODE as test or production on the backend.' });
+            return;
+        }
+        if (!razorpayKeyId || !razorpayKeySecret) {
+            console.error('[payments] Razorpay credentials are missing.', {
+                paymentMode,
+                hasKeyId: Boolean(razorpayKeyId),
+                hasKeySecret: Boolean(razorpayKeySecret)
+            });
+            res.status(503).json({ message: 'Razorpay credentials are not configured on the backend.' });
+            return;
+        }
+        const requiredKeyPrefix = paymentMode === 'production' ? 'rzp_live_' : 'rzp_test_';
+        if (!razorpayKeyId.startsWith(requiredKeyPrefix)) {
+            console.error('[payments] Razorpay key ID does not match configured payment mode.', {
+                paymentMode,
+                expectedKeyPrefix: requiredKeyPrefix,
+                keyIdPrefix: razorpayKeyId.slice(0, 9)
+            });
+            res.status(503).json({ message: `The Razorpay key ID does not match PAYMENT_MODE=${paymentMode}. Check the backend credentials.` });
+            return;
+        }
+
+        const auth = Buffer.from(`${razorpayKeyId}:${razorpayKeySecret}`).toString('base64');
+        let response: Response;
+        try {
+            response = await fetch('https://api.razorpay.com/v1/orders', {
+                method: 'POST',
+                headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount, currency, ...(receipt ? { receipt } : {}) })
+            });
+        } catch (error) {
+            console.error('[payments] Razorpay order API request failed.', {
+                paymentMode,
+                error: describeError(error)
+            });
+            res.status(502).json({ message: 'Unable to reach Razorpay to create the payment order. Check backend network access and try again.' });
+            return;
+        }
+
+        let razorpayOrder: { id?: string; amount?: number; currency?: string; error?: { code?: string; description?: string } };
+        try {
+            razorpayOrder = await response.json() as typeof razorpayOrder;
+        } catch (error) {
+            console.error('[payments] Razorpay returned an invalid order response.', {
+                httpStatus: response.status,
+                error: describeError(error)
+            });
+            res.status(502).json({ message: 'Razorpay returned an invalid response while creating the payment order.' });
+            return;
+        }
+        if (!response.ok) {
+            const providerMessage = razorpayOrder.error?.description;
+            console.error('[payments] Razorpay rejected order creation.', {
+                httpStatus: response.status,
+                providerCode: razorpayOrder.error?.code,
+                providerMessage: providerMessage ? describeError(new Error(providerMessage)).message : undefined,
+                paymentMode
+            });
+            res.status(502).json({
+                message: providerMessage
+                    ? `Razorpay could not create the payment order: ${describeError(new Error(providerMessage)).message}`
+                    : `Razorpay could not create the payment order (HTTP ${response.status}). Check backend Razorpay credentials and account settings.`
+            });
+            return;
+        }
+        if (!razorpayOrder.id) {
+            console.error('[payments] Razorpay order response did not include an order ID.', {
+                httpStatus: response.status,
+                paymentMode
+            });
+            res.status(502).json({ message: 'Razorpay response did not include a payment order ID.' });
+            return;
+        }
+
+        quoteDatabase.paymentIntents = getPaymentIntents(quoteDatabase);
+        quoteDatabase.paymentIntents[razorpayOrder.id] = {
+            amount,
+            currency: razorpayOrder.currency || 'INR',
+            createdAt: new Date().toISOString(),
+            items: quotedItems,
+            subtotal,
+            discount,
+            deliveryCharge
+        };
+        try {
+            await writeDatabase(quoteDatabase);
+        } catch (error) {
+            console.error('[payments] Razorpay order was created but could not be persisted.', {
+                orderId: razorpayOrder.id,
+                error: describeError(error)
+            });
+            res.status(500).json({ message: 'Razorpay created the order, but the backend could not save its payment record. Contact support before retrying.' });
+            return;
+        }
+
+        res.json({ ...razorpayOrder, keyId: razorpayKeyId });
+    } catch (error) {
+        console.error('[payments] Unexpected error while creating Razorpay order.', {
+            paymentMode,
+            hasKeyId: Boolean(razorpayKeyId),
+            hasKeySecret: Boolean(razorpayKeySecret),
+            error: describeError(error)
+        });
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'The backend encountered an unexpected error while preparing your Razorpay payment. Please try again or contact support.' });
+        }
     }
 });
 
@@ -868,6 +945,13 @@ if (fs.existsSync(frontendDistPath)) {
 
 initializePersistentStore().then(() => {
     app.listen(port, () => {
+        const expectedKeyPrefix = paymentMode === 'production' ? 'rzp_live_' : paymentMode === 'test' ? 'rzp_test_' : null;
+        console.info('[payments] Razorpay backend configuration status.', {
+            paymentMode,
+            hasKeyId: Boolean(razorpayKeyId),
+            hasKeySecret: Boolean(razorpayKeySecret),
+            keyIdPrefixMatchesMode: expectedKeyPrefix ? razorpayKeyId.startsWith(expectedKeyPrefix) : false
+        });
         console.log(`CP Furniture cloud backend listening on http://localhost:${port}`);
     });
 }).catch((error) => {

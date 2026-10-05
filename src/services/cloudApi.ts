@@ -21,19 +21,43 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
     const adminToken = localStorage.getItem('cp_admin_session_token');
     if (adminToken && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${adminToken}`);
-    const response = await fetch(`${API_BASE}${path}`, {
-        ...options,
-        cache: 'no-store',
-        headers
-    });
+    let response: Response;
+    try {
+        response = await fetch(`${API_BASE}${path}`, {
+            ...options,
+            cache: 'no-store',
+            headers
+        });
+    } catch (error) {
+        const detail = error instanceof Error ? error.message : 'Network request failed.';
+        throw new Error(`Unable to connect to the backend for ${path}: ${detail}`);
+    }
 
     if (!response.ok) {
-        let message = `Cloud API request failed: ${response.status}`;
+        let message = `Cloud API request failed: ${response.status} ${response.statusText}`.trim();
         try {
-            const errorBody = await response.json() as { message?: string };
-            if (errorBody.message) message = errorBody.message;
+            const responseText = await response.text();
+            if (responseText) {
+                try {
+                    const errorBody = JSON.parse(responseText) as {
+                        message?: string;
+                        error?: { description?: string } | string;
+                    };
+                    if (errorBody.message) {
+                        message = errorBody.message;
+                    } else if (typeof errorBody.error === 'string') {
+                        message = errorBody.error;
+                    } else if (errorBody.error?.description) {
+                        message = errorBody.error.description;
+                    }
+                } catch {
+                    if (!responseText.trimStart().startsWith('<')) {
+                        message = responseText.slice(0, 300);
+                    }
+                }
+            }
         } catch {
-            // Keep the HTTP status when the backend does not return JSON.
+            // Keep the HTTP status when the backend response body cannot be read.
         }
         throw new Error(message);
     }
